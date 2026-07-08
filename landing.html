@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CineMaxBR - Sua Experiência Premium de Streaming</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --accent: #E50914;
+            --accent-glow: rgba(229, 9, 20, 0.5);
+            --bg: #08080A;
+            --surface: #111116;
+            --text: #FFFFFF;
+            --text-dim: #94A3B8;
+            --glass: rgba(255, 255, 255, 0.03);
+            --border: rgba(255, 255, 255, 0.08);
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        .navbar {
+            background: rgba(8, 8, 10, 0.8);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border);
+            padding: 1rem 0;
+        }
+
+        .brand {
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: var(--text);
+            text-decoration: none;
+        }
+        .brand span { color: var(--accent); }
+
+        .hero-section {
+            padding: 100px 0;
+            background: linear-gradient(180deg, rgba(229, 9, 20, 0.1) 0%, rgba(8, 8, 10, 1) 100%);
+            text-align: center;
+        }
+
+        .hero-title {
+            font-size: 3.5rem;
+            font-weight: 800;
+            margin-bottom: 20px;
+        }
+
+        .hero-subtitle {
+            font-size: 1.2rem;
+            color: var(--text-dim);
+            max-width: 600px;
+            margin: 0 auto 40px;
+        }
+
+        .btn-premium {
+            background: var(--accent);
+            color: white;
+            padding: 15px 40px;
+            border-radius: 50px;
+            font-weight: 700;
+            text-decoration: none;
+            box-shadow: 0 8px 24px var(--accent-glow);
+            transition: 0.3s;
+        }
+        .btn-premium:hover {
+            transform: scale(1.05);
+            color: white;
+        }
+
+        .feature-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            padding: 40px;
+            height: 100%;
+            transition: 0.3s;
+        }
+        .feature-card:hover {
+            border-color: var(--accent);
+            transform: translateY(-10px);
+        }
+        .feature-icon {
+            font-size: 3rem;
+            color: var(--accent);
+            margin-bottom: 20px;
+        }
+
+        .footer {
+            padding: 60px 0;
+            border-top: 1px solid var(--border);
+            background: var(--surface);
+            text-align: center;
+        }
+
+        .footer-links a {
+            color: var(--text-dim);
+            text-decoration: none;
+            margin: 0 15px;
+            transition: 0.3s;
+        }
+        .footer-links a:hover {
+            color: var(--accent);
+        }
+
+        .app-preview {
+            max-width: 800px;
+            margin: 60px auto 0;
+            border-radius: 20px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+            border: 1px solid var(--border);
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar sticky-top">
+        <div class="container">
+            <a href="#" class="brand"><i class="fas fa-clapperboard"></i> CINE<span>MAX</span>BR</a>
+            <div class="d-flex">
+                <a href="#features" class="btn btn-link text-white text-decoration-none me-3">Recursos</a>
+                <a href="politica-de-privacidade.html" class="btn btn-link text-white text-decoration-none">Privacidade</a>
+            </div>
+        </div>
+    </nav>
+
+    <header class="hero-section">
+        <div class="container">
+            <h1 class="hero-title">Cinema no seu bolso.</h1>
+            <p class="hero-subtitle">Experimente o streaming de alta fidelidade com controles avançados, gestos intuitivos e uma biblioteca vasta de filmes e séries.</p>
+            <a href="#" class="btn-premium">DOWNLOAD APK</a>
+
+            <div class="app-preview mt-5">
+                <!-- Placeholder para imagem do app -->
+                <div style="background: #1A1A22; height: 400px; border-radius: 20px; display: flex; align-items: center; justify-content: center; border: 1px dashed var(--border);">
+                    <i class="fas fa-mobile-alt" style="font-size: 10rem; opacity: 0.1;"></i>
+                    <span style="position: absolute; color: var(--text-dim);">[Interface do CineMaxBR]</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <section id="features" class="py-5">
+        <div class="container">
+            <div class="row g-4">
+                <div class="col-md-4">
+                    <div class="feature-card">
+                        <i class="fas fa-wand-magic-sparkles feature-icon"></i>
+                        <h3>Controle por Gestos</h3>
+                        <p class="text-dim">Brilho e volume ao deslizar o dedo. Toque duplo para buscar e pressione para acelerar 2x.</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="feature-card">
+                        <i class="fas fa-clapperboard feature-icon"></i>
+                        <h3>Qualidade Premium</h3>
+                        <p class="text-dim">Seleção manual de resolução e suporte a múltiplos servidores para garantir a melhor experiência.</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="feature-card">
+                        <i class="fas fa-history feature-icon"></i>
+                        <h3>Continue Assistindo</h3>
+                        <p class="text-dim">Sincronização em tempo real para você nunca perder o ponto onde parou nos seus filmes favoritos.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="brand mb-4"><i class="fas fa-clapperboard"></i> CINE<span>MAX</span>BR</div>
+            <div class="footer-links mb-4">
+                <a href="politica-de-privacidade.html">Política de Privacidade</a>
+                <a href="termo-de-serviço.html">Termos de Serviço</a>
+                <a href="mailto:contato@cinemaxbr.com">Contato</a>
+            </div>
+            <p class="text-dim small">&copy; 2024 CineMaxBR. Desenvolvido para amantes de cinema.</p>
+            <p class="text-dim" style="font-size: 10px; margin-top: 20px;">O CineMaxBR utiliza o Google OAuth para autenticação segura e sincronização de progresso do usuário. Não compartilhamos seus dados com terceiros.</p>
+        </div>
+    </footer>
+
+</body>
+</html>

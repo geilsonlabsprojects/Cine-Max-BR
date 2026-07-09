@@ -1,1051 +1,219 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-br">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CineMax | Filmes e Séries</title>
-    
-    <!-- Google Fonts: Inter para visual moderno e premium -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    
-    <!-- Phosphor Icons para ícones modernos -->
-    <script src="https://unpkg.com/@phosphor-icons/web"></script>
-
-    <style>
-        /* ==========================================================================
-           CONFIGURAÇÕES GLOBAIS E VARIÁVEIS CSS
-           ========================================================================== */
-        :root {
-            /* Paleta de Cores Premium (Dark Theme) */
-            --bg-base: #0a0a0f;
-            --bg-surface: #14141c;
-            --bg-surface-hover: #1f1f2b;
-            --bg-glass: rgba(20, 20, 28, 0.6);
-            --primary: #e50914; /* Vermelho Netflix */
-            --primary-hover: #f40612;
-            --text-main: #ffffff;
-            --text-muted: #9ca3af;
-            --border-color: rgba(255, 255, 255, 0.08);
-            
-            /* Efeitos e Dimensões */
-            --radius-sm: 4px;
-            --radius-md: 8px;
-            --radius-lg: 16px;
-            --shadow-sm: 0 4px 6px rgba(0,0,0,0.3);
-            --shadow-lg: 0 10px 30px rgba(0,0,0,0.7);
-            --shadow-glow: 0 0 15px rgba(229, 9, 20, 0.4);
-            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            
-            /* Z-Index Arquitetura */
-            --z-base: 1;
-            --z-nav: 100;
-            --z-modal: 1000;
-            --z-toast: 2000;
-            --z-loader: 3000;
-        }
-
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: var(--bg-base);
-            color: var(--text-main);
-            overflow-x: hidden;
-            -webkit-font-smoothing: antialiased;
-        }
-
-        /* Custom Scrollbar */
-        ::-webkit-scrollbar { width: 8px; height: 8px; }
-        ::-webkit-scrollbar-track { background: var(--bg-base); }
-        ::-webkit-scrollbar-thumb { background: var(--bg-surface-hover); border-radius: var(--radius-md); }
-        ::-webkit-scrollbar-thumb:hover { background: var(--primary); }
-
-        /* Utilitários */
-        .hidden { display: none !important; }
-        .glass { background: var(--bg-glass); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid var(--border-color); }
-        
-        /* ==========================================================================
-           COMPONENTES REUTILIZÁVEIS
-           ========================================================================== */
-        button { cursor: pointer; border: none; outline: none; font-family: inherit; transition: var(--transition); }
-        
-        .btn-primary {
-            background-color: var(--primary); color: white;
-            padding: 12px 24px; border-radius: var(--radius-sm);
-            font-weight: 600; font-size: 1rem;
-            display: flex; align-items: center; justify-content: center; gap: 8px;
-        }
-        .btn-primary:hover { background-color: var(--primary-hover); transform: scale(1.02); box-shadow: var(--shadow-glow); }
-        .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
-
-        .btn-secondary {
-            background-color: rgba(255, 255, 255, 0.15); color: white;
-            padding: 12px 24px; border-radius: var(--radius-sm); font-weight: 600;
-            display: flex; align-items: center; justify-content: center; gap: 8px;
-        }
-        .btn-secondary:hover { background-color: rgba(255, 255, 255, 0.25); }
-
-        .btn-icon { background: none; color: white; font-size: 1.5rem; border-radius: 50%; padding: 8px; display: flex; align-items: center; justify-content: center; }
-        .btn-icon:hover { background: rgba(255,255,255,0.1); transform: scale(1.1); }
-
-        input {
-            width: 100%; padding: 14px 16px;
-            background: rgba(0, 0, 0, 0.5); border: 1px solid var(--border-color);
-            border-radius: var(--radius-sm); color: white; font-size: 1rem; transition: var(--transition);
-        }
-        input:focus { border-color: var(--primary); outline: none; background: rgba(0,0,0,0.8); box-shadow: 0 0 0 2px rgba(229,9,20,0.2); }
-
-        /* ==========================================================================
-           SISTEMA DE NOTIFICAÇÕES (TOASTS)
-           ========================================================================== */
-        #toast-container { position: fixed; top: 24px; right: 24px; z-index: var(--z-toast); display: flex; flex-direction: column; gap: 12px; pointer-events: none; }
-        .toast {
-            padding: 16px 24px; border-radius: var(--radius-sm); background: var(--bg-surface);
-            color: white; display: flex; align-items: center; gap: 12px; box-shadow: var(--shadow-lg);
-            border-left: 4px solid transparent; animation: slideInRight 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
-            min-width: 300px; max-width: 400px; pointer-events: auto;
-        }
-        .toast.success { border-left-color: #10b981; }
-        .toast.error { border-left-color: #ef4444; }
-        .toast.warning { border-left-color: #f59e0b; }
-        .toast.info { border-left-color: #3b82f6; }
-        
-        @keyframes slideInRight { from { transform: translateX(120%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
-        @keyframes fadeOut { to { opacity: 0; transform: translateY(-10px) scale(0.9); } }
-
-        /* ==========================================================================
-           GLOBAL LOADER & SKELETONS
-           ========================================================================== */
-        #global-loader {
-            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-            background: var(--bg-base); z-index: var(--z-loader);
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            transition: opacity 0.5s ease;
-        }
-        .spinner { width: 50px; height: 50px; border: 3px solid rgba(255,255,255,0.1); border-top-color: var(--primary); border-radius: 50%; animation: spin 1s linear infinite; }
-        @keyframes spin { to { transform: rotate(360deg); } }
-
-        .skeleton {
-            background: linear-gradient(90deg, var(--bg-surface) 25%, var(--bg-surface-hover) 50%, var(--bg-surface) 75%);
-            background-size: 200% 100%; animation: shimmer 1.5s infinite; border-radius: var(--radius-sm);
-        }
-        @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
-
-        /* ==========================================================================
-           TELA DE AUTENTICAÇÃO (LOGIN/CADASTRO)
-           ========================================================================== */
-        #auth-view {
-            min-height: 100vh; display: flex; align-items: center; justify-content: center;
-            background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.8)), url('https://images.unsplash.com/photo-1574375927938-d5a98e8ffe85?q=80&w=2069&auto=format&fit=crop') center/cover no-repeat;
-            padding: 20px;
-        }
-        .auth-card { width: 100%; max-width: 400px; padding: 48px; border-radius: var(--radius-md); box-shadow: var(--shadow-lg); background: rgba(0,0,0,0.75); }
-        .auth-logo { font-size: 2.5rem; font-weight: 800; color: var(--primary); text-align: center; margin-bottom: 30px; letter-spacing: -1px; text-transform: uppercase; }
-        .auth-form { display: flex; flex-direction: column; gap: 16px; }
-        .auth-form h2 { font-size: 1.5rem; margin-bottom: 10px; font-weight: 600; }
-        .auth-switch { text-align: center; margin-top: 24px; color: var(--text-muted); font-size: 0.9rem; }
-        .auth-switch span { color: white; cursor: pointer; font-weight: 500; transition: var(--transition); }
-        .auth-switch span:hover { text-decoration: underline; color: var(--primary); }
-
-        /* ==========================================================================
-           APLICAÇÃO PRINCIPAL (NAVBAR)
-           ========================================================================== */
-        #app-view { min-height: 100vh; display: flex; flex-direction: column; }
-
-        header {
-            position: fixed; top: 0; left: 0; right: 0; height: 70px;
-            display: flex; align-items: center; justify-content: space-between;
-            padding: 0 4%; z-index: var(--z-nav); transition: var(--transition);
-            background: linear-gradient(to bottom, rgba(10,10,15,0.9) 0%, rgba(10,10,15,0) 100%);
-        }
-        header.scrolled { background: var(--bg-base); box-shadow: var(--shadow-sm); }
-        
-        .nav-left { display: flex; align-items: center; gap: 40px; }
-        .nav-logo { font-size: 1.8rem; font-weight: 800; color: var(--primary); cursor: pointer; text-transform: uppercase; letter-spacing: -1px;}
-        .nav-links { display: flex; gap: 20px; }
-        .nav-links a { color: var(--text-muted); text-decoration: none; font-size: 0.9rem; font-weight: 500; transition: var(--transition); cursor: pointer; }
-        .nav-links a:hover, .nav-links a.active { color: white; font-weight: 600; }
-        
-        .nav-right { display: flex; align-items: center; gap: 20px; }
-        
-        .search-box { position: relative; display: flex; align-items: center; }
-        .search-box i { position: absolute; left: 12px; color: var(--text-muted); font-size: 1.2rem; pointer-events: none;}
-        .search-box input { 
-            padding: 8px 16px 8px 40px; border-radius: 4px; background: rgba(0,0,0,0.7); 
-            border: 1px solid transparent; width: 0; opacity: 0; visibility: hidden; 
-            transition: all 0.3s ease; font-size: 0.9rem;
-        }
-        .search-box.active input { width: 250px; opacity: 1; visibility: visible; border-color: var(--border-color); }
-        .search-icon-btn { background: none; color: white; font-size: 1.4rem; display: flex; align-items: center; }
-
-        .user-menu { position: relative; cursor: pointer; }
-        .avatar { width: 36px; height: 36px; border-radius: 4px; background: var(--primary); display: flex; align-items: center; justify-content: center; font-weight: bold; overflow: hidden; }
-        .avatar img { width: 100%; height: 100%; object-fit: cover; }
-        
-        .dropdown {
-            position: absolute; right: 0; top: 130%; width: 220px;
-            background: rgba(20, 20, 28, 0.95); border: 1px solid var(--border-color);
-            border-radius: var(--radius-sm); padding: 10px 0; display: none;
-            flex-direction: column; backdrop-filter: blur(10px); box-shadow: var(--shadow-lg);
-        }
-        .user-menu:hover .dropdown { display: flex; animation: fadeIn 0.2s ease; }
-        .dropdown-header { padding: 10px 20px; border-bottom: 1px solid var(--border-color); margin-bottom: 5px; word-break: break-all; }
-        .dropdown-item { padding: 12px 20px; color: var(--text-muted); text-decoration: none; transition: var(--transition); display: flex; align-items: center; gap: 12px; font-size: 0.9rem;}
-        .dropdown-item:hover { background: rgba(255,255,255,0.05); color: white; }
-
-        /* ==========================================================================
-           BANNER HERO (Destaque Principal)
-           ========================================================================== */
-        .hero {
-            position: relative; height: 85vh; min-height: 500px;
-            display: flex; align-items: center; padding: 0 4%;
-            background-size: cover; background-position: center top;
-            transition: background-image 0.5s ease;
-        }
-        .hero::before {
-            content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
-            background: linear-gradient(to right, var(--bg-base) 0%, rgba(10,10,15,0.7) 40%, transparent 100%),
-                        linear-gradient(to top, var(--bg-base) 0%, transparent 30%);
-        }
-        .hero-content { position: relative; max-width: 650px; z-index: 10; animation: fadeIn 1s ease; }
-        .hero-title { font-size: 4rem; font-weight: 800; line-height: 1.1; margin-bottom: 16px; text-shadow: 2px 2px 4px rgba(0,0,0,0.6); }
-        .hero-meta { display: flex; gap: 16px; color: #d1d5db; margin-bottom: 16px; font-weight: 600; font-size: 1rem; align-items: center; }
-        .hero-meta .match { color: #46d369; }
-        .hero-meta .rating { border: 1px solid #d1d5db; padding: 1px 6px; border-radius: 3px; font-size: 0.8rem; }
-        .hero-desc { font-size: 1.2rem; line-height: 1.5; color: #e5e7eb; margin-bottom: 24px; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; text-shadow: 1px 1px 2px rgba(0,0,0,0.8);}
-        .hero-buttons { display: flex; gap: 16px; }
-
-        /* ==========================================================================
-           CATÁLOGO DE FILMES E CARROSSÉIS
-           ========================================================================== */
-        .main-content { padding: 0 4% 50px; margin-top: -120px; position: relative; z-index: 10; flex: 1; }
-        .category-section { margin-bottom: 40px; position: relative; }
-        .category-title { font-size: 1.4rem; font-weight: 600; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; z-index: 2; position: relative;}
-        
-        .carousel-wrapper { position: relative; }
-        .carousel {
-            display: flex; gap: 10px; overflow-x: auto; overflow-y: hidden;
-            scroll-snap-type: x mandatory; padding: 20px 0; scroll-behavior: smooth;
-        }
-        .carousel::-webkit-scrollbar { display: none; }
-        
-        /* Controles do Carrossel (Setas) */
-        .carousel-btn {
-            position: absolute; top: 50%; transform: translateY(-50%); z-index: 5;
-            background: rgba(0,0,0,0.5); color: white; border: none; font-size: 2rem;
-            width: 40px; height: 100%; cursor: pointer; opacity: 0; transition: var(--transition);
-            display: flex; align-items: center; justify-content: center; backdrop-filter: blur(4px);
-        }
-        .carousel-wrapper:hover .carousel-btn { opacity: 1; }
-        .carousel-btn:hover { background: rgba(0,0,0,0.8); font-size: 2.5rem;}
-        .carousel-btn.prev { left: -4%; border-top-right-radius: 8px; border-bottom-right-radius: 8px; }
-        .carousel-btn.next { right: -4%; border-top-left-radius: 8px; border-bottom-left-radius: 8px; }
-
-        .movie-card {
-            flex: 0 0 220px; height: 330px; scroll-snap-align: start;
-            border-radius: var(--radius-sm); overflow: hidden; position: relative;
-            cursor: pointer; transition: transform 0.3s ease, box-shadow 0.3s ease, z-index 0.1s;
-            background-color: var(--bg-surface); transform-origin: center center;
-        }
-        /* Efeito de scale elegante no hover estilo Netflix */
-        .movie-card:hover { transform: scale(1.15) translateY(-10px); box-shadow: var(--shadow-lg); z-index: 20; }
-        
-        .movie-poster { width: 100%; height: 100%; object-fit: cover; transition: var(--transition); }
-        .movie-card:hover .movie-poster { filter: brightness(0.5); }
-        
-        .movie-info {
-            position: absolute; bottom: 0; left: 0; right: 0; padding: 16px;
-            background: linear-gradient(to top, rgba(0,0,0,1) 0%, rgba(0,0,0,0.8) 50%, transparent 100%);
-            opacity: 0; transition: opacity 0.3s ease; display: flex; flex-direction: column; gap: 8px;
-        }
-        .movie-card:hover .movie-info { opacity: 1; }
-        
-        .movie-info-actions { display: flex; gap: 8px; margin-bottom: 4px; }
-        .mini-btn { width: 32px; height: 32px; border-radius: 50%; background: white; color: black; display: flex; align-items: center; justify-content: center; font-size: 1rem; transition: var(--transition); }
-        .mini-btn:hover { background: #e5e5e5; }
-        .mini-btn.dark { background: rgba(42, 42, 42, 0.8); color: white; border: 1px solid rgba(255,255,255,0.3); }
-        .mini-btn.dark:hover { border-color: white; background: rgba(60,60,60,1); }
-        .mini-btn.fav.active { color: var(--primary); }
-
-        .movie-info h4 { font-size: 0.9rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .movie-info .meta { font-size: 0.75rem; color: #46d369; font-weight: bold; display: flex; align-items: center; gap: 8px; }
-        .movie-info .meta span.length { color: white; font-weight: normal; }
-
-        /* Estado Vazio */
-        .empty-state { text-align: center; padding: 60px 20px; color: var(--text-muted); width: 100%; }
-        .empty-state i { font-size: 4rem; margin-bottom: 16px; opacity: 0.3; }
-
-        /* ==========================================================================
-           MODAL DE DETALHES (Estilo Max/Netflix)
-           ========================================================================== */
-        .modal-overlay {
-            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0,0,0,0.7); backdrop-filter: blur(8px);
-            z-index: var(--z-modal); display: flex; align-items: center; justify-content: center;
-            opacity: 0; visibility: hidden; transition: all 0.3s ease; padding: 20px;
-        }
-        .modal-overlay.active { opacity: 1; visibility: visible; }
-        
-        .modal-content {
-            width: 100%; max-width: 900px; background: var(--bg-surface);
-            border-radius: var(--radius-lg); overflow: hidden; position: relative;
-            transform: scale(0.9) translateY(20px); transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 50px rgba(0,0,0,0.8);
-        }
-        .modal-overlay.active .modal-content { transform: scale(1) translateY(0); }
-        
-        .modal-close {
-            position: absolute; top: 20px; right: 20px; background: rgba(20,20,28,0.7); width: 40px; height: 40px;
-            border-radius: 50%; display: flex; align-items: center; justify-content: center;
-            color: white; z-index: 10; font-size: 1.2rem; border: 1px solid rgba(255,255,255,0.2); backdrop-filter: blur(4px);
-        }
-        .modal-close:hover { background: white; color: black; transform: scale(1.1); }
-        
-        .modal-header { height: 450px; width: 100%; position: relative; }
-        .modal-banner { width: 100%; height: 100%; object-fit: cover; }
-        .modal-header-gradient {
-            position: absolute; top: 0; left: 0; right: 0; bottom: 0;
-            background: linear-gradient(to top, var(--bg-surface) 0%, transparent 60%);
-        }
-        
-        .modal-body { padding: 0 40px 40px; margin-top: -150px; position: relative; z-index: 5; }
-        
-        .modal-title { font-size: 3rem; font-weight: 800; margin-bottom: 20px; text-shadow: 2px 2px 4px rgba(0,0,0,0.8); }
-        .modal-meta-row { display: flex; gap: 15px; color: white; margin-bottom: 24px; font-size: 1rem; align-items: center; font-weight: 500;}
-        
-        .modal-actions { display: flex; gap: 15px; margin-bottom: 30px; }
-        .modal-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 40px; }
-        
-        .modal-desc { line-height: 1.6; color: #e5e7eb; font-size: 1.1rem; margin-bottom: 20px; }
-        .modal-info-tags p { margin-bottom: 10px; font-size: 0.9rem; color: var(--text-muted); }
-        .modal-info-tags span { color: white; }
-
-        /* ==========================================================================
-           RESPONSIVIDADE (Mobile, Tablet, TV)
-           ========================================================================== */
-        @media (max-width: 1024px) {
-            .hero-title { font-size: 3rem; }
-            .movie-card { flex: 0 0 180px; height: 270px; }
-            .modal-grid { grid-template-columns: 1fr; gap: 20px; }
-            .modal-header { height: 350px; }
-        }
-
-        @media (max-width: 768px) {
-            header { padding: 0 15px; }
-            .nav-links { display: none; } /* Em um app real, teria um menu hamburguer */
-            .nav-logo { font-size: 1.5rem; }
-            .search-box.active input { width: 180px; }
-            
-            .hero { padding: 0 15px; min-height: 400px; height: 70vh; }
-            .hero-title { font-size: 2.2rem; }
-            .hero-desc { font-size: 1rem; -webkit-line-clamp: 3; }
-            
-            .main-content { padding: 0 15px 30px; margin-top: -60px; }
-            .movie-card { flex: 0 0 130px; height: 195px; }
-            .movie-card:hover { transform: scale(1.05); } /* Reduzir scale em mobile */
-            .carousel-btn { display: none; } /* Esconder setas no touch */
-            
-            .modal-content { max-height: 100vh; border-radius: 0; }
-            .modal-header { height: 250px; }
-            .modal-title { font-size: 2rem; }
-            .modal-body { padding: 0 20px 20px; margin-top: -100px; }
-        }
-    </style>
+    <title>CINEMAX | Ultra Admin Hub</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="assets/css/styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
-    <!-- GLOBAL LOADER -->
-    <div id="global-loader">
-        <div class="spinner"></div>
-    </div>
 
-    <!-- TOAST NOTIFICATIONS -->
-    <div id="toast-container"></div>
+    <aside class="sidebar">
+        <a href="#" class="brand"><i class="fas fa-clapperboard"></i> <span>CINE<span>MAX</span></span></a>
+        <nav>
+            <div class="nav-item active" data-tab="dashboard"><i class="fas fa-chart-line"></i> <span>Dashboard</span></div>
+            <div class="nav-item" data-tab="add-media"><i class="fas fa-plus-circle"></i> <span>Novo Conteúdo</span></div>
+            <div class="nav-item" data-tab="catalog"><i class="fas fa-film"></i> <span>Biblioteca</span></div>
+            <div class="nav-item" data-tab="franchises"><i class="fas fa-layer-group"></i> <span>Franquias</span></div>
+        </nav>
+    </aside>
 
-    <!-- VIEW: AUTENTICAÇÃO -->
-    <div id="auth-view" class="hidden">
-        <div class="auth-card glass">
-            <h1 class="auth-logo">CineMax</h1>
-            
-            <!-- FORMULÁRIO DE LOGIN -->
-            <form id="login-form" class="auth-form">
-                <h2>Entrar</h2>
-                <input type="email" id="login-email" placeholder="E-mail" required autocomplete="email">
-                <input type="password" id="login-password" placeholder="Senha" required autocomplete="current-password">
-                <button type="submit" class="btn-primary" id="btn-login">
-                    <span>Entrar</span>
-                </button>
-                <div class="auth-switch">
-                    Novo por aqui? <span id="go-to-register">Assine agora.</span>
-                </div>
-            </form>
-
-            <!-- FORMULÁRIO DE CADASTRO -->
-            <form id="register-form" class="auth-form hidden">
-                <h2>Criar Conta</h2>
-                <input type="text" id="reg-name" placeholder="Nome completo" required>
-                <input type="email" id="reg-email" placeholder="E-mail" required autocomplete="email">
-                <input type="password" id="reg-password" placeholder="Senha (min. 6 caracteres)" required autocomplete="new-password">
-                <input type="password" id="reg-confirm-password" placeholder="Confirmar Senha" required>
-                <button type="submit" class="btn-primary" id="btn-register">
-                    <span>Cadastrar</span>
-                </button>
-                <div class="auth-switch">
-                    Já tem uma conta? <span id="go-to-login">Faça login.</span>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- VIEW: APLICATIVO PRINCIPAL -->
-    <div id="app-view" class="hidden">
-        
-        <!-- HEADER / NAVBAR -->
-        <header id="main-header">
-            <div class="nav-left">
-                <div class="nav-logo" id="nav-logo">CineMax</div>
-                <nav class="nav-links">
-                    <a class="active" data-view="home">Início</a>
-                    <a data-view="series">Séries</a>
-                    <a data-view="movies">Filmes</a>
-                    <a data-view="my-list">Minha Lista</a>
-                </nav>
+    <main class="main-content">
+        <!-- Dashboard -->
+        <div id="dashboard" class="tab-content active">
+            <h1 class="fw-800 mb-4">Painel de Controle</h1>
+            <div class="row g-4 mb-5">
+                <div class="col-md-3"><div class="stat-card"><h3 id="statMovies">0</h3><p>Filmes</p><i class="fas fa-film"></i></div></div>
+                <div class="col-md-3"><div class="stat-card"><h3 id="statSeries">0</h3><p>Séries</p><i class="fas fa-tv"></i></div></div>
+                <div class="col-md-3"><div class="stat-card"><h3 id="statFranchises">0</h3><p>Franquias</p><i class="fas fa-layer-group"></i></div></div>
+                <div class="col-md-3"><div class="stat-card"><h3 id="statViews">0</h3><p>Total de Views</p><i class="fas fa-eye"></i></div></div>
             </div>
-            
-            <div class="nav-right">
-                <div class="search-box" id="search-box">
-                    <button type="button" class="search-icon-btn" id="search-btn">
-                        <i class="ph ph-magnifying-glass"></i>
-                    </button>
-                    <input type="text" id="search-input" placeholder="Títulos, gêneros...">
-                </div>
-                
-                <div class="user-menu">
-                    <div class="avatar" id="user-avatar-initial">U</div>
-                    <div class="dropdown">
-                        <div class="dropdown-header">
-                            <strong style="color: white; display: block; font-size: 0.95rem;" id="dropdown-name">Usuário</strong>
-                            <span style="color: var(--text-muted); font-size: 0.8rem;" id="dropdown-email">email@teste.com</span>
+
+            <div class="row g-4">
+                <div class="col-md-4">
+                    <div class="glass-card h-100">
+                        <h5 class="fw-bold mb-4">Distribuição do Catálogo</h5>
+                        <div style="height: 250px;">
+                            <canvas id="statsChart"></canvas>
                         </div>
-                        <a href="#" class="dropdown-item" data-view="my-list"><i class="ph ph-heart"></i> Minha Lista</a>
-                        <a href="#" class="dropdown-item" id="btn-logout"><i class="ph ph-sign-out"></i> Sair da conta</a>
                     </div>
                 </div>
-            </div>
-        </header>
-
-        <!-- BANNER HERO -->
-        <section class="hero" id="hero-section" style="background-image: url('https://placehold.co/1920x1080/14141c/ffffff?text=Carregando...');">
-            <div class="hero-content">
-                <h1 class="hero-title" id="hero-title">Carregando...</h1>
-                <div class="hero-meta" id="hero-meta">
-                    <span class="match">Relevante</span>
-                    <span class="rating">--</span>
-                    <span>----</span>
-                </div>
-                <p class="hero-desc" id="hero-desc">Buscando as melhores recomendações para você.</p>
-                <div class="hero-buttons">
-                    <button class="btn-primary" id="hero-play"><i class="ph ph-play-fill" style="font-size:1.5rem"></i> Assistir</button>
-                    <button class="btn-secondary" id="hero-info"><i class="ph ph-info" style="font-size:1.5rem"></i> Mais Informações</button>
-                </div>
-            </div>
-        </section>
-
-        <!-- CONTEÚDO PRINCIPAL (CATÁLOGO) -->
-        <main class="main-content" id="catalog-container">
-            <!-- As categorias serão injetadas via JavaScript -->
-        </main>
-    </div>
-
-    <!-- MODAL DE DETALHES DO FILME -->
-    <div class="modal-overlay" id="movie-modal">
-        <div class="modal-content">
-            <button class="modal-close" id="close-modal"><i class="ph ph-x"></i></button>
-            
-            <div class="modal-header">
-                <img src="https://placehold.co/900x450/14141c/ffffff?text=Carregando..." alt="Banner" class="modal-banner" id="modal-banner">
-                <div class="modal-header-gradient"></div>
-            </div>
-            
-            <div class="modal-body">
-                <h2 class="modal-title" id="modal-title">Título do Filme</h2>
-                
-                <div class="modal-meta-row">
-                    <span class="match" style="color: #46d369;">98% Relevante</span>
-                    <span id="modal-year">2024</span>
-                    <span class="rating" id="modal-rating" style="border: 1px solid rgba(255,255,255,0.4); padding: 2px 6px; border-radius: 4px; font-size:0.8rem">16</span>
-                    <span id="modal-duration">2h 15m</span>
-                </div>
-                
-                <div class="modal-actions">
-                    <button class="btn-primary"><i class="ph ph-play-fill" style="font-size:1.5rem"></i> Assistir</button>
-                    <button class="btn-icon mini-btn dark fav" id="modal-fav-btn" title="Adicionar à Minha Lista"><i class="ph ph-plus"></i></button>
-                    <button class="btn-icon mini-btn dark" title="Compartilhar"><i class="ph ph-share-network"></i></button>
-                </div>
-                
-                <div class="modal-grid">
-                    <div class="modal-left">
-                        <p class="modal-desc" id="modal-desc">Sinopse do filme vai aqui. Uma descrição detalhada e envolvente sobre a trama, os personagens e o cenário para atrair a atenção do usuário.</p>
-                    </div>
-                    <div class="modal-right modal-info-tags">
-                        <p><strong>Elenco:</strong> <span id="modal-cast">Nome do Ator 1, Nome do Ator 2</span></p>
-                        <p><strong>Direção:</strong> <span id="modal-director">Nome do Diretor</span></p>
-                        <p><strong>Gêneros:</strong> <span id="modal-genre">Ação, Aventura</span></p>
+                <div class="col-md-8">
+                    <div class="glass-card h-100">
+                        <h5 class="fw-bold mb-4">Ações Rápidas</h5>
+                        <div class="d-flex gap-3 flex-wrap">
+                            <button class="btn btn-outline-info quick-action-btn" onclick="document.querySelector('[data-tab=add-media]').click()">
+                                <i class="fas fa-plus-circle fa-2x"></i>
+                                <span class="small fw-bold">Novo Conteúdo</span>
+                            </button>
+                            <button class="btn btn-outline-warning quick-action-btn" onclick="document.querySelector('[data-tab=franchises]').click()">
+                                <i class="fas fa-layer-group fa-2x"></i>
+                                <span class="small fw-bold">Nova Franquia</span>
+                            </button>
+                            <button class="btn btn-outline-danger quick-action-btn" onclick="location.reload()">
+                                <i class="fas fa-sync-alt fa-2x"></i>
+                                <span class="small fw-bold">Sincronizar</span>
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
 
-    <script type="module">
-        /* ==========================================================================
-           1. CONFIGURAÇÃO FIREBASE E IMPORTAÇÕES (SDK V10 Modular)
-           ========================================================================== */
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, updateProfile } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-        import { getDatabase, ref, onValue, set, get, child, remove } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+        <!-- Add Media -->
+        <div id="add-media" class="tab-content">
+            <h1 class="fw-800 mb-4">Cadastrar Mídia</h1>
+            <div class="glass-card">
+                <div class="d-flex gap-2 mb-4">
+                    <button class="btn btn-dark active" id="typeM">FILME</button>
+                    <button class="btn btn-dark" id="typeS">SÉRIE</button>
+                </div>
 
-        // NOTA: Configurações fornecidas pelo usuário. Analytics removido conforme regra.
-        const firebaseConfig = {
-            apiKey: "AIzaSyAqj8_l6s3kbFWzOv1-NU2wT6MSRpHidVM",
-            authDomain: "cine-max-br.firebaseapp.com",
-            projectId: "cine-max-br",
-            storageBucket: "cine-max-br.firebasestorage.app",
-            messagingSenderId: "388609107323",
-            appId: "1:388609107323:web:0ac60d4386f8cefa0d49de"
-        };
-
-        // Inicializar Firebase
-        let appFirebase;
-        let auth;
-        let db;
-
-        try {
-            appFirebase = initializeApp(firebaseConfig);
-            auth = getAuth(appFirebase);
-            db = getDatabase(appFirebase);
-            console.log("🔥 Firebase inicializado com sucesso.");
-        } catch (error) {
-            console.error("Erro ao inicializar Firebase:", error);
-            // Em caso de erro crítico, a UI avisará no Loader
-        }
-
-        /* ==========================================================================
-           2. ESTADO GLOBAL DA APLICAÇÃO E DADOS INICIAIS (SEED)
-           ========================================================================== */
-        const AppState = {
-            currentUser: null,
-            movies: [],
-            favorites: [],
-            categories: ["Populares", "Ação", "Comédia", "Drama", "Ficção Científica"],
-            currentView: 'home', // home, movies, series, my-list
-            searchQuery: ''
-        };
-
-        // Banco de dados simulado caso o Firebase Realtime DB esteja vazio inicialmente
-        const INITIAL_MOVIES_SEED = {
-            "movie_1": { id: "movie_1", title: "O Vazio Quântico", genre: "Ficção Científica", category: "Filmes", year: 2024, rating: "14", duration: "2h 10m", desc: "Uma equipe de cientistas descobre um portal para um universo onde o tempo corre ao contrário. Ao atravessá-lo, eles devem encontrar uma maneira de voltar antes que deixem de existir.", cast: "Ana Silva, João Pedro, Carlos Mendes", director: "Julia Costa", poster: "https://images.unsplash.com/photo-1534447677768-be436bb09401?q=80&w=400&h=600&fit=crop", banner: "https://images.unsplash.com/photo-1534447677768-be436bb09401?q=80&w=1920&h=1080&fit=crop" },
-            "movie_2": { id: "movie_2", title: "Velocidade Máxima", genre: "Ação", category: "Filmes", year: 2023, rating: "16", duration: "1h 55m", desc: "Um piloto de fuga é forçado a realizar o maior assalto de sua vida para salvar sua família de um sindicato do crime implacável.", cast: "Ricardo Alvez, Mariana Lima", director: "Pedro Santos", poster: "https://images.unsplash.com/photo-1603584173870-7f23fdae1b7a?q=80&w=400&h=600&fit=crop", banner: "https://images.unsplash.com/photo-1603584173870-7f23fdae1b7a?q=80&w=1920&h=1080&fit=crop" },
-            "movie_3": { id: "movie_3", title: "Riso Solto", genre: "Comédia", category: "Séries", year: 2025, rating: "Livre", duration: "3 Temporadas", desc: "Um grupo de amigos desajeitados tenta abrir uma agência de detetives, mas acabam causando mais confusão do que resolvendo mistérios.", cast: "Lucas Neto, Bruna Marquezine", director: "Tiago Leifert", poster: "https://images.unsplash.com/photo-1529156069898-49953e39b3ac?q=80&w=400&h=600&fit=crop", banner: "https://images.unsplash.com/photo-1529156069898-49953e39b3ac?q=80&w=1920&h=1080&fit=crop" },
-            "movie_4": { id: "movie_4", title: "Noites Sombrias", genre: "Drama", category: "Séries", year: 2022, rating: "18", duration: "1 Temporada", desc: "Um detetive atormentado pelo passado deve investigar uma série de crimes em uma cidade onde todos têm segredos obscuros.", cast: "Wagner Moura, Selton Mello", director: "José Padilha", poster: "https://images.unsplash.com/photo-1518773553398-650c184e0bb3?q=80&w=400&h=600&fit=crop", banner: "https://images.unsplash.com/photo-1518773553398-650c184e0bb3?q=80&w=1920&h=1080&fit=crop" },
-            "movie_5": { id: "movie_5", title: "Guerreiros de Aço", genre: "Ação", category: "Filmes", year: 2024, rating: "14", duration: "2h 30m", desc: "Em um futuro distópico, gladiadores lutam em arenas de metal gigantes para entreter as massas, até que um deles decide liderar uma rebelião.", cast: "Rodrigo Santoro, Alice Braga", director: "Fernando Meirelles", poster: "https://images.unsplash.com/photo-1542442828-287217bfb87f?q=80&w=400&h=600&fit=crop", banner: "https://images.unsplash.com/photo-1542442828-287217bfb87f?q=80&w=1920&h=1080&fit=crop" },
-            "movie_6": { id: "movie_6", title: "O Amor Acontece", genre: "Comédia", category: "Filmes", year: 2021, rating: "12", duration: "1h 45m", desc: "Duas pessoas que se odeiam são forçadas a trabalhar juntas em um projeto, apenas para descobrir que o amor pode surgir nos lugares mais inesperados.", cast: "Tatá Werneck, Cauã Reymond", director: "Daniel Filho", poster: "https://images.unsplash.com/photo-1518173946687-a4c8892bbd9f?q=80&w=400&h=600&fit=crop", banner: "https://images.unsplash.com/photo-1518173946687-a4c8892bbd9f?q=80&w=1920&h=1080&fit=crop" },
-            "movie_7": { id: "movie_7", title: "Exploração Marte", genre: "Ficção Científica", category: "Séries", year: 2026, rating: "10", duration: "2 Temporadas", desc: "A primeira colônia humana em Marte enfrenta desafios mortais quando uma tempestade de areia global ameaça destruir tudo o que construíram.", cast: "Lázaro Ramos, Taís Araújo", director: "Heitor Dhalia", poster: "https://images.unsplash.com/photo-1614730321146-b6fa6a46bcb4?q=80&w=400&h=600&fit=crop", banner: "https://images.unsplash.com/photo-1614730321146-b6fa6a46bcb4?q=80&w=1920&h=1080&fit=crop" },
-            "movie_8": { id: "movie_8", title: "Lágrimas de Sangue", genre: "Drama", category: "Filmes", year: 2023, rating: "16", duration: "2h 05m", desc: "Uma família tenta reconstruir a vida após uma tragédia devastadora, enfrentando seus próprios demônios e segredos no processo.", cast: "Fernanda Montenegro, Tony Ramos", director: "Walter Salles", poster: "https://images.unsplash.com/photo-1536440136628-849c177e76a1?q=80&w=400&h=600&fit=crop", banner: "https://images.unsplash.com/photo-1536440136628-849c177e76a1?q=80&w=1920&h=1080&fit=crop" }
-        };
-
-        /* ==========================================================================
-           3. UTILITÁRIOS E FUNÇÕES DE UI
-           ========================================================================== */
-        const UI = {
-            hideLoader: () => {
-                const loader = document.getElementById('global-loader');
-                loader.style.opacity = '0';
-                setTimeout(() => loader.style.display = 'none', 500);
-            },
-            showLoader: () => {
-                const loader = document.getElementById('global-loader');
-                loader.style.display = 'flex';
-                // Trigger reflow
-                void loader.offsetWidth;
-                loader.style.opacity = '1';
-            },
-            showToast: (message, type = 'info') => {
-                const container = document.getElementById('toast-container');
-                const toast = document.createElement('div');
-                toast.className = `toast ${type}`;
-                
-                let icon = 'info';
-                if(type === 'success') icon = 'check-circle';
-                if(type === 'error') icon = 'warning-circle';
-                if(type === 'warning') icon = 'warning';
-
-                toast.innerHTML = `<i class="ph ph-${icon}" style="font-size: 1.5rem"></i> <span>${message}</span>`;
-                container.appendChild(toast);
-                
-                setTimeout(() => {
-                    toast.style.animation = 'fadeOut 0.3s forwards';
-                    setTimeout(() => toast.remove(), 300);
-                }, 4000);
-            },
-            toggleView: (showApp) => {
-                if (showApp) {
-                    document.getElementById('auth-view').classList.add('hidden');
-                    document.getElementById('app-view').classList.remove('hidden');
-                } else {
-                    document.getElementById('app-view').classList.add('hidden');
-                    document.getElementById('auth-view').classList.remove('hidden');
-                }
-            },
-            getInitials: (name) => {
-                if (!name) return "U";
-                return name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
-            }
-        };
-
-        /* ==========================================================================
-           4. CONTROLADOR DE AUTENTICAÇÃO
-           ========================================================================== */
-        const AuthController = {
-            init: () => {
-                // Eventos de Formulário
-                document.getElementById('login-form').addEventListener('submit', AuthController.handleLogin);
-                document.getElementById('register-form').addEventListener('submit', AuthController.handleRegister);
-                document.getElementById('btn-logout').addEventListener('click', AuthController.handleLogout);
-
-                // Alternar Forms
-                document.getElementById('go-to-register').addEventListener('click', () => {
-                    document.getElementById('login-form').classList.add('hidden');
-                    document.getElementById('register-form').classList.remove('hidden');
-                });
-                document.getElementById('go-to-login').addEventListener('click', () => {
-                    document.getElementById('register-form').classList.add('hidden');
-                    document.getElementById('login-form').classList.remove('hidden');
-                });
-
-                // Listener de Estado
-                onAuthStateChanged(auth, (user) => {
-                    if (user) {
-                        AppState.currentUser = user;
-                        AuthController.updateProfileUI(user);
-                        UI.toggleView(true);
-                        AppController.initApp(); // Iniciar dados e UI do app
-                    } else {
-                        AppState.currentUser = null;
-                        UI.toggleView(false);
-                        UI.hideLoader();
-                    }
-                });
-            },
-            
-            handleLogin: async (e) => {
-                e.preventDefault();
-                const email = document.getElementById('login-email').value;
-                const pass = document.getElementById('login-password').value;
-                const btn = document.getElementById('btn-login');
-                
-                try {
-                    btn.disabled = true;
-                    btn.innerHTML = '<div class="spinner" style="width:20px;height:20px;border-width:2px;"></div>';
-                    await signInWithEmailAndPassword(auth, email, pass);
-                    UI.showToast('Bem-vindo de volta ao CineMax!', 'success');
-                } catch (error) {
-                    AuthController.handleAuthError(error.code);
-                } finally {
-                    btn.disabled = false;
-                    btn.innerHTML = '<span>Entrar</span>';
-                }
-            },
-
-            handleRegister: async (e) => {
-                e.preventDefault();
-                const name = document.getElementById('reg-name').value;
-                const email = document.getElementById('reg-email').value;
-                const pass = document.getElementById('reg-password').value;
-                const confirm = document.getElementById('reg-confirm-password').value;
-                const btn = document.getElementById('btn-register');
-
-                if (pass.length < 6) return UI.showToast('A senha deve ter no mínimo 6 caracteres', 'warning');
-                if (pass !== confirm) return UI.showToast('As senhas não coincidem', 'warning');
-
-                try {
-                    btn.disabled = true;
-                    btn.innerHTML = '<div class="spinner" style="width:20px;height:20px;border-width:2px;"></div>';
-                    const userCredential = await createUserWithEmailAndPassword(auth, email, pass);
-                    await updateProfile(userCredential.user, { displayName: name });
-                    
-                    // Inicializar nó do usuário no DB
-                    set(ref(db, `users/${userCredential.user.uid}`), { 
-                        email: email, 
-                        name: name,
-                        createdAt: new Date().toISOString()
-                    });
-
-                    UI.showToast('Conta criada com sucesso!', 'success');
-                } catch (error) {
-                    AuthController.handleAuthError(error.code);
-                } finally {
-                    btn.disabled = false;
-                    btn.innerHTML = '<span>Cadastrar</span>';
-                }
-            },
-
-            handleLogout: async (e) => {
-                e.preventDefault();
-                try {
-                    UI.showLoader();
-                    await signOut(auth);
-                    // O onAuthStateChanged lidará com o redirecionamento
-                } catch (error) {
-                    UI.showToast('Erro ao sair da conta.', 'error');
-                    UI.hideLoader();
-                }
-            },
-
-            updateProfileUI: (user) => {
-                document.getElementById('dropdown-name').textContent = user.displayName || 'Usuário';
-                document.getElementById('dropdown-email').textContent = user.email;
-                document.getElementById('user-avatar-initial').textContent = UI.getInitials(user.displayName);
-            },
-
-            handleAuthError: (code) => {
-                switch(code) {
-                    case 'auth/invalid-credential': UI.showToast('E-mail ou senha incorretos.', 'error'); break;
-                    case 'auth/email-already-in-use': UI.showToast('Este e-mail já está em uso.', 'warning'); break;
-                    case 'auth/network-request-failed': UI.showToast('Sem conexão com a internet.', 'error'); break;
-                    default: UI.showToast('Ocorreu um erro na autenticação.', 'error');
-                }
-            }
-        };
-
-        /* ==========================================================================
-           5. CONTROLADOR DE DADOS (DB)
-           ========================================================================== */
-        const DBController = {
-            // Garante que existam filmes no DB. Se não houver, injeta a semente.
-            checkAndSeedMovies: async () => {
-                try {
-                    const snapshot = await get(child(ref(db), 'movies'));
-                    if (snapshot.exists()) {
-                        AppState.movies = Object.values(snapshot.val());
-                    } else {
-                        // Injetar dados iniciais para o catálogo não ficar vazio
-                        console.log("Injetando filmes padrão...");
-                        await set(ref(db, 'movies'), INITIAL_MOVIES_SEED);
-                        AppState.movies = Object.values(INITIAL_MOVIES_SEED);
-                    }
-                } catch (error) {
-                    console.error("Erro ao buscar filmes", error);
-                    UI.showToast("Erro ao conectar ao catálogo", "error");
-                }
-            },
-
-            // Ouve em tempo real as mudanças no catálogo
-            listenToMovies: (callback) => {
-                const moviesRef = ref(db, 'movies');
-                onValue(moviesRef, (snapshot) => {
-                    if (snapshot.exists()) {
-                        AppState.movies = Object.values(snapshot.val());
-                        callback();
-                    }
-                });
-            },
-
-            // Ouve em tempo real os favoritos do usuário logado
-            listenToFavorites: (callback) => {
-                if (!AppState.currentUser) return;
-                const favRef = ref(db, `users/${AppState.currentUser.uid}/favorites`);
-                onValue(favRef, (snapshot) => {
-                    AppState.favorites = snapshot.exists() ? Object.keys(snapshot.val()) : [];
-                    callback();
-                });
-            },
-
-            toggleFavorite: async (movieId) => {
-                if (!AppState.currentUser) return;
-                const isFav = AppState.favorites.includes(movieId);
-                const favRef = ref(db, `users/${AppState.currentUser.uid}/favorites/${movieId}`);
-                
-                try {
-                    if (isFav) {
-                        await remove(favRef);
-                    } else {
-                        await set(favRef, true);
-                    }
-                } catch (error) {
-                    UI.showToast("Erro ao atualizar favoritos", "error");
-                }
-            }
-        };
-
-        /* ==========================================================================
-           6. CONTROLADOR PRINCIPAL DA APLICAÇÃO (UI Logic)
-           ========================================================================== */
-        const AppController = {
-            initApp: async () => {
-                // Ao logar, busca os dados iniciais
-                await DBController.checkAndSeedMovies();
-                
-                // Configurar Listeners em Tempo Real
-                DBController.listenToMovies(() => {
-                    AppController.renderCatalog();
-                    if(AppState.movies.length > 0) AppController.renderHero(AppState.movies[0]);
-                });
-
-                DBController.listenToFavorites(() => {
-                    // Atualiza ícones de favoritos na UI sem recarregar tudo
-                    document.querySelectorAll('.btn-fav').forEach(btn => {
-                        const id = btn.dataset.id;
-                        const icon = btn.querySelector('i');
-                        if (AppState.favorites.includes(id)) {
-                            icon.classList.replace('ph-plus', 'ph-check');
-                            btn.classList.add('active');
-                        } else {
-                            icon.classList.replace('ph-check', 'ph-plus');
-                            btn.classList.remove('active');
-                        }
-                    });
-                });
-
-                AppController.setupEventListeners();
-                
-                // Simular carregamento inicial
-                setTimeout(() => {
-                    AppController.renderCatalog();
-                    if(AppState.movies.length > 0) AppController.renderHero(AppState.movies[0]);
-                    UI.hideLoader();
-                }, 800);
-            },
-
-            setupEventListeners: () => {
-                // Efeito Navbar Scroll
-                window.addEventListener('scroll', () => {
-                    const header = document.getElementById('main-header');
-                    if (window.scrollY > 50) header.classList.add('scrolled');
-                    else header.classList.remove('scrolled');
-                });
-
-                // Caixa de Busca
-                const searchBtn = document.getElementById('search-btn');
-                const searchBox = document.getElementById('search-box');
-                const searchInput = document.getElementById('search-input');
-                
-                searchBtn.addEventListener('click', () => {
-                    searchBox.classList.toggle('active');
-                    if(searchBox.classList.contains('active')) searchInput.focus();
-                });
-
-                searchInput.addEventListener('input', (e) => {
-                    AppState.searchQuery = e.target.value.toLowerCase();
-                    AppController.renderCatalog(); // Re-renderiza com filtro
-                });
-
-                // Navegação Menu Principal
-                document.querySelectorAll('.nav-links a').forEach(link => {
-                    link.addEventListener('click', (e) => {
-                        document.querySelectorAll('.nav-links a').forEach(l => l.classList.remove('active'));
-                        e.target.classList.add('active');
-                        AppState.currentView = e.target.dataset.view;
-                        AppState.searchQuery = ''; // limpa busca ao mudar view
-                        searchInput.value = '';
-                        searchBox.classList.remove('active');
-                        AppController.renderCatalog();
-                        window.scrollTo({ top: 0, behavior: 'smooth' });
-                    });
-                });
-
-                // Navbar Logo volta para Home
-                document.getElementById('nav-logo').addEventListener('click', () => {
-                    document.querySelector('[data-view="home"]').click();
-                });
-
-                // Fechar Modal
-                document.getElementById('close-modal').addEventListener('click', AppController.closeModal);
-                document.getElementById('movie-modal').addEventListener('click', (e) => {
-                    if (e.target.id === 'movie-modal') AppController.closeModal();
-                });
-            },
-
-            renderHero: (movie) => {
-                if(!movie) return;
-                const hero = document.getElementById('hero-section');
-                hero.style.backgroundImage = `url('${movie.banner}')`;
-                
-                document.getElementById('hero-title').textContent = movie.title;
-                document.getElementById('hero-desc').textContent = movie.desc;
-                document.getElementById('hero-meta').innerHTML = `
-                    <span class="match">98% Relevante</span>
-                    <span class="rating">${movie.rating}</span>
-                    <span>${movie.year}</span>
-                    <span>${movie.duration}</span>
-                `;
-
-                const btnPlay = document.getElementById('hero-play');
-                const btnInfo = document.getElementById('hero-info');
-                
-                btnInfo.onclick = () => AppController.openModal(movie);
-                btnPlay.onclick = () => UI.showToast("Reproduzindo filme...", "success");
-            },
-
-            renderCatalog: () => {
-                const container = document.getElementById('catalog-container');
-                container.innerHTML = ''; // Limpa catálogo
-                
-                const { movies, currentView, searchQuery, categories, favorites } = AppState;
-
-                // Filtrar filmes base na View Atual e Busca
-                let displayMovies = movies.filter(m => {
-                    const matchSearch = m.title.toLowerCase().includes(searchQuery) || m.genre.toLowerCase().includes(searchQuery);
-                    
-                    if (currentView === 'movies') return m.category === 'Filmes' && matchSearch;
-                    if (currentView === 'series') return m.category === 'Séries' && matchSearch;
-                    if (currentView === 'my-list') return favorites.includes(m.id) && matchSearch;
-                    return matchSearch; // home
-                });
-
-                if (displayMovies.length === 0) {
-                    container.innerHTML = `
-                        <div class="empty-state">
-                            <i class="ph ph-magnifying-glass"></i>
-                            <h3>Nenhum título encontrado</h3>
-                            <p>Tente ajustar sua busca ou filtro.</p>
-                        </div>`;
-                    return;
-                }
-
-                // Se não estiver buscando, agrupa por categorias. Se tiver busca/minha lista, mostra um grid simples.
-                if (searchQuery || currentView === 'my-list') {
-                    const section = document.createElement('div');
-                    section.className = 'category-section';
-                    section.innerHTML = `
-                        <h3 class="category-title">${currentView === 'my-list' ? 'Minha Lista' : 'Resultados da Busca'}</h3>
-                        <div class="carousel" style="flex-wrap: wrap; justify-content: flex-start;">
-                            ${displayMovies.map(m => AppController.createMovieCardHTML(m)).join('')}
-                        </div>`;
-                    container.appendChild(section);
-                } else {
-                    // Renderiza carrosséis por categoria
-                    categories.forEach(cat => {
-                        let catMovies = [];
-                        if (cat === "Populares") {
-                            catMovies = [...displayMovies].sort(() => 0.5 - Math.random()).slice(0, 6); // Mock populare
-                        } else {
-                            catMovies = displayMovies.filter(m => m.genre === cat);
-                        }
-
-                        if (catMovies.length > 0) {
-                            const section = document.createElement('div');
-                            section.className = 'category-section';
-                            
-                            const uniqueId = `carousel-${cat.replace(/\s/g, '')}`;
-                            section.innerHTML = `
-                                <h3 class="category-title">${cat}</h3>
-                                <div class="carousel-wrapper">
-                                    <button class="carousel-btn prev" onclick="document.getElementById('${uniqueId}').scrollBy({left: -600, behavior: 'smooth'})"><i class="ph ph-caret-left"></i></button>
-                                    <div class="carousel" id="${uniqueId}">
-                                        ${catMovies.map(m => AppController.createMovieCardHTML(m)).join('')}
-                                    </div>
-                                    <button class="carousel-btn next" onclick="document.getElementById('${uniqueId}').scrollBy({left: 600, behavior: 'smooth'})"><i class="ph ph-caret-right"></i></button>
-                                </div>`;
-                            container.appendChild(section);
-                        }
-                    });
-                }
-
-                // Adicionar eventos aos cards e botões recém renderizados
-                document.querySelectorAll('.movie-card').forEach(card => {
-                    card.addEventListener('click', (e) => {
-                        // Evita abrir o modal se clicou no botão de favoritar
-                        if(e.target.closest('.btn-fav') || e.target.closest('.btn-play-mini')) return;
-                        const movie = AppState.movies.find(m => m.id === card.dataset.id);
-                        if(movie) AppController.openModal(movie);
-                    });
-                });
-
-                document.querySelectorAll('.btn-fav').forEach(btn => {
-                    btn.addEventListener('click', async (e) => {
-                        e.stopPropagation(); // Evita bubble para o card
-                        const id = btn.dataset.id;
-                        await DBController.toggleFavorite(id);
-                        // A classe active e ícone será trocada via listener do DBController
-                    });
-                });
-                
-                document.querySelectorAll('.btn-play-mini').forEach(btn => {
-                    btn.addEventListener('click', (e) => {
-                        e.stopPropagation();
-                        UI.showToast("Iniciando reprodução...", "success");
-                    });
-                });
-            },
-
-            createMovieCardHTML: (movie) => {
-                const isFav = AppState.favorites.includes(movie.id);
-                const favIcon = isFav ? 'ph-check' : 'ph-plus';
-                const favClass = isFav ? 'active' : '';
-
-                return `
-                    <div class="movie-card" data-id="${movie.id}">
-                        <img src="${movie.poster}" alt="${movie.title}" class="movie-poster" loading="lazy">
-                        <div class="movie-info">
-                            <div class="movie-info-actions">
-                                <button class="mini-btn btn-play-mini"><i class="ph ph-play-fill"></i></button>
-                                <button class="mini-btn dark btn-fav ${favClass}" data-id="${movie.id}"><i class="ph ${favIcon}"></i></button>
-                            </div>
-                            <h4>${movie.title}</h4>
-                            <div class="meta">
-                                <span>98%</span>
-                                <span class="rating" style="border: 1px solid rgba(255,255,255,0.4); padding: 0 4px; border-radius: 2px; color: white;">${movie.rating}</span>
-                                <span class="length">${movie.duration}</span>
-                            </div>
+                <div class="row">
+                    <div class="col-md-8">
+                        <label class="small text-dim mb-1">Título no Brasil</label>
+                        <div class="input-group mb-3">
+                            <input type="text" id="mTitle" class="form-control-pro m-0">
+                            <button class="btn btn-outline-accent" id="btnFetchTMDB" style="border-radius: 0 14px 14px 0;"><i class="fas fa-magic"></i> BUSCAR TMDB</button>
                         </div>
                     </div>
-                `;
-            },
+                    <div class="col-md-4"><label class="small text-dim mb-1">Ano</label><input type="number" id="mYear" class="form-control-pro"></div>
+                </div>
 
-            openModal: (movie) => {
-                const modal = document.getElementById('movie-modal');
-                document.getElementById('modal-banner').src = movie.banner;
-                document.getElementById('modal-title').textContent = movie.title;
-                document.getElementById('modal-year').textContent = movie.year;
-                document.getElementById('modal-rating').textContent = movie.rating;
-                document.getElementById('modal-duration').textContent = movie.duration;
-                document.getElementById('modal-desc').textContent = movie.desc;
-                document.getElementById('modal-cast').textContent = movie.cast;
-                document.getElementById('modal-director').textContent = movie.director;
-                document.getElementById('modal-genre').textContent = movie.genre;
+                <div class="row">
+                    <div class="col-md-6"><label class="small text-dim mb-1">Título Original</label><input type="text" id="mOriginal" class="form-control-pro"></div>
+                    <div class="col-md-6">
+                        <label class="small text-dim mb-1">Franquia</label>
+                        <select id="mFranchise" class="form-control-pro">
+                            <option value="">Sem Franquia</option>
+                        </select>
+                    </div>
+                </div>
 
-                const favBtn = document.getElementById('modal-fav-btn');
-                const isFav = AppState.favorites.includes(movie.id);
-                favBtn.innerHTML = isFav ? '<i class="ph ph-check"></i>' : '<i class="ph ph-plus"></i>';
-                
-                // Limpa eventos antigos clonando o botão
-                const newFavBtn = favBtn.cloneNode(true);
-                favBtn.parentNode.replaceChild(newFavBtn, favBtn);
-                
-                newFavBtn.addEventListener('click', async () => {
-                    await DBController.toggleFavorite(movie.id);
-                    const nowIsFav = AppState.favorites.includes(movie.id);
-                    newFavBtn.innerHTML = nowIsFav ? '<i class="ph ph-check"></i>' : '<i class="ph ph-plus"></i>';
-                });
+                <div class="row">
+                    <div class="col-md-4"><label class="small text-dim mb-1">Estúdio</label><input type="text" id="mStudio" class="form-control-pro"></div>
+                    <div class="col-md-4"><label class="small text-dim mb-1">Distribuição</label><input type="text" id="mDistributor" class="form-control-pro"></div>
+                    <div class="col-md-4"><label class="small text-dim mb-1">Direção</label><input type="text" id="mDirector" class="form-control-pro"></div>
+                </div>
 
-                modal.classList.add('active');
-                document.body.style.overflow = 'hidden'; // Evita scroll do fundo
-            },
+                <div class="row">
+                    <div class="col-md-6"><label class="small text-dim mb-1">Gêneros (Ex: Ação, Drama)</label><input type="text" id="mGenre" class="form-control-pro"></div>
+                    <div class="col-md-3">
+                        <label class="small text-dim mb-1">Classificação</label>
+                        <select id="mRating" class="form-control-pro">
+                            <option value="L">L (Livre)</option>
+                            <option value="10">10+</option>
+                            <option value="12">12+</option>
+                            <option value="14">14+</option>
+                            <option value="16">16+</option>
+                            <option value="18">18+</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3"><label class="small text-dim mb-1">Duração</label><input type="text" id="mDuration" class="form-control-pro" placeholder="Ex: 2h 15min"></div>
+                </div>
 
-            closeModal: () => {
-                document.getElementById('movie-modal').classList.remove('active');
-                document.body.style.overflow = 'auto';
-            }
-        };
+                <div class="row">
+                    <div class="col-md-10"><label class="small text-dim mb-1">URL do Trailer (YouTube)</label><input type="text" id="mTrailer" class="form-control-pro"></div>
+                    <div class="col-md-2 d-flex align-items-end mb-3"><button class="btn btn-outline-info w-100" style="border-radius: 14px; padding: 11px;" id="btnPreviewTrailer"><i class="fas fa-play"></i> TESTAR</button></div>
+                </div>
+                <div id="trailerPreview" class="mb-4" style="display:none;"></div>
 
-        /* ==========================================================================
-           7. INICIALIZAÇÃO DA APLICAÇÃO
-           ========================================================================== */
-        // Inicia o controlador de autenticação ao carregar o script
-        AuthController.init();
+                <label class="small text-dim mb-1">Sinopse</label>
+                <textarea id="mDesc" class="form-control-pro" rows="3"></textarea>
 
-    </script>
+                <div id="movieBox">
+                    <div class="row g-2 align-items-center mb-3">
+                        <div class="col-md-9"><label class="small text-dim mb-1">URL do Vídeo</label><textarea id="mUrl" class="form-control-pro m-0"></textarea></div>
+                        <div class="col-md-3 d-flex gap-2 align-items-end mb-3">
+                            <button class="btn btn-outline-info flex-grow-1" style="border-radius: 14px; padding: 11px;" id="btnPreviewVideo"><i class="fas fa-play"></i> TESTAR</button>
+                            <button class="btn btn-outline-warning" style="border-radius: 14px;" id="btnAnalyzeLink" title="Analisar Link"><i class="fas fa-search"></i></button>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="seriesBox" style="display:none;">
+                    <div id="seasonsRoot"></div>
+                    <button class="btn btn-sm btn-outline-secondary mb-4" id="btnAddSeason"><i class="fas fa-plus"></i> Temporada</button>
+                </div>
+
+                <div id="analysisResult" class="mb-4 small p-3 rounded" style="display:none; background: rgba(255,255,255,0.05); border: 1px solid var(--border);"></div>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <label class="small text-dim mb-1">URL Poster (Vertical)</label>
+                        <input type="text" id="mPoster" class="form-control-pro">
+                        <div id="posterPreview" class="preview-container" style="height: 200px;"></div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="small text-dim mb-1">URL Banner (Horizontal)</label>
+                        <input type="text" id="mBanner" class="form-control-pro">
+                        <div id="bannerPreview" class="preview-container" style="height: 200px;"></div>
+                    </div>
+                </div>
+
+                <div class="form-check form-switch mb-4 mt-2">
+                    <input class="form-check-input" type="checkbox" id="mFeatured">
+                    <label class="form-check-label small fw-bold" for="mFeatured">DESTAQUE NA PÁGINA INICIAL</label>
+                </div>
+
+                <div class="d-flex flex-column gap-2">
+                    <button class="btn-premium" id="btnSaveMedia">PUBLICAR NO APP</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Catalog -->
+        <div id="catalog" class="tab-content">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="fw-800 m-0">Biblioteca</h1>
+                <div class="d-flex gap-3 w-50 justify-content-end">
+                    <div class="form-check d-flex align-items-center">
+                        <input class="form-check-input me-2" type="checkbox" id="selectAll">
+                        <label class="small text-dim" for="selectAll">Selecionar Todos</label>
+                    </div>
+                    <input type="text" id="search" class="form-control-pro w-50 m-0" placeholder="Buscar por título...">
+                </div>
+            </div>
+            <div id="mediaList"></div>
+        </div>
+
+        <!-- Franchises -->
+        <div id="franchises" class="tab-content">
+            <h1 class="fw-800 mb-4">Gerenciar Franquias</h1>
+            <div class="glass-card">
+                <div class="row g-2">
+                    <div class="col-10"><input type="text" id="fName" class="form-control-pro m-0" placeholder="Nome da Franquia (Ex: Marvel Cinematic Universe)"></div>
+                    <div class="col-2"><button class="btn-premium" id="btnSaveFranchise">CRIAR</button></div>
+                </div>
+            </div>
+            <div id="franchiseList"></div>
+        </div>
+    </main>
+
+    <div id="bulkBar" class="bulk-bar">
+        <span id="bulkCount">0 selecionados</span>
+        <button class="btn btn-danger btn-sm px-4 rounded-pill" id="btnDeleteBulk"><i class="fas fa-trash me-2"></i> EXCLUIR SELECIONADOS</button>
+    </div>
+
+    <!-- Toast Notification -->
+    <div class="toast-container position-fixed bottom-0 end-0 p-3">
+        <div id="appToast" class="toast align-items-center text-white bg-dark border-0" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="d-flex">
+                <div class="toast-body" id="toastMessage"></div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase SDK (Compat) -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+
+    <!-- Application Logic -->
+    <script type="module" src="assets/js/core/app.js"></script>
 </body>
 </html>

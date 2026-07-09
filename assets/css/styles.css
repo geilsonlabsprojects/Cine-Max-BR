@@ -1,0 +1,57 @@
+@import url('sidebar.css');
+@import url('cards.css');
+@import url('forms.css');
+@import url('dashboard.css');
+
+:root {
+    --accent: #E50914;
+    --accent-glow: rgba(229, 9, 20, 0.4);
+    --bg: #08080A;
+    --surface: #111116;
+    --surface-light: #1A1A22;
+    --text: #FFFFFF;
+    --text-dim: #94A3B8;
+    --glass: rgba(255, 255, 255, 0.03);
+    --border: rgba(255, 255, 255, 0.08);
+    --transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    overflow-x: hidden;
+    letter-spacing: -0.01em;
+    min-height: 100vh;
+}
+
+/* --- Scrollbar --- */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--surface-light); border-radius: 10px; }
+
+.main-content {
+    margin-left: 260px;
+    padding: 2.5rem;
+    min-height: 100vh;
+    transition: var(--transition);
+}
+
+.tab-content {
+    display: none;
+    animation: fadeIn 0.4s ease-out;
+}
+.tab-content.active { display: block; }
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 992px) {
+    .main-content { margin-left: 80px; padding: 1.5rem; }
+}
+
+@media (max-width: 768px) {
+    .main-content { margin-left: 0; padding-bottom: 100px; }
+}

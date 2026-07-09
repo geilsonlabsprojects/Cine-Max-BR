@@ -149,31 +149,47 @@ export async function handleTMDBFetch() {
         return;
     }
 
-    showToast("Buscando no TMDB...", "info");
-    const results = await searchTMDB(title, state.currentType);
+    const btn = document.getElementById('btnFetchTMDB');
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> BUSCANDO...';
+    btn.disabled = true;
 
-    if (results.length === 0) {
-        showToast("Nenhum resultado encontrado no TMDB.", "warning");
-        return;
-    }
+    try {
+        const results = await searchTMDB(title, state.currentType);
 
-    // For simplicity, take the first result. In a real app, show a selection modal.
-    const details = await getTMDBDetails(results[0].id, state.currentType);
+        if (results.length === 0) {
+            showToast("Nenhum resultado encontrado no TMDB.", "warning");
+            return;
+        }
 
-    if (details) {
-        document.getElementById('mTitle').value = details.title || "";
-        document.getElementById('mOriginal').value = details.originalTitle || "";
-        document.getElementById('mYear').value = details.year || "";
-        const descInput = document.getElementById('mDesc');
-        if (descInput) descInput.value = details.desc || "";
-        document.getElementById('mGenre').value = details.genres || "";
-        document.getElementById('mPoster').value = details.poster || "";
-        document.getElementById('mBanner').value = details.banner || "";
+        // Use the first result, but with deep fetch
+        const details = await getTMDBDetails(results[0].id, state.currentType);
 
-        if (details.poster) updateImagePreview('posterPreview', details.poster);
-        if (details.banner) updateImagePreview('bannerPreview', details.banner);
+        if (details) {
+            document.getElementById('mTitle').value = details.title || "";
+            document.getElementById('mOriginal').value = details.originalTitle || "";
+            document.getElementById('mYear').value = details.year || "";
+            document.getElementById('mDesc').value = details.desc || "";
+            document.getElementById('mGenre').value = details.genres || "";
+            document.getElementById('mStudio').value = details.studio || "";
+            document.getElementById('mDirector').value = details.director || "";
+            document.getElementById('mPoster').value = details.poster || "";
+            document.getElementById('mBanner').value = details.banner || "";
 
-        showToast("Dados preenchidos via TMDB!", "success");
+            if (details.trailer) {
+                document.getElementById('mTrailer').value = details.trailer;
+            }
+
+            if (details.poster) updateImagePreview('posterPreview', details.poster);
+            if (details.banner) updateImagePreview('bannerPreview', details.banner);
+
+            showToast(`"${details.title}" importado com sucesso!`, "success");
+        }
+    } catch (err) {
+        showToast("Erro ao buscar no TMDB", "error");
+    } finally {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
     }
 }
 

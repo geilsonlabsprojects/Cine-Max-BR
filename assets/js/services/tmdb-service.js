@@ -22,11 +22,20 @@ export async function searchTMDB(query, type = 'movie') {
 
 export async function getTMDBDetails(id, type = 'movie') {
     const searchType = type === 'movie' ? 'movie' : 'tv';
-    const url = `${TMDB_BASE_URL}/${searchType}/${id}?api_key=${TMDB_API_KEY}&language=pt-BR`;
+    // Append append_to_response to get more data in one go
+    const url = `${TMDB_BASE_URL}/${searchType}/${id}?api_key=${TMDB_API_KEY}&language=pt-BR&append_to_response=videos,credits`;
 
     try {
         const response = await fetch(url);
         const data = await response.json();
+
+        // Find official trailer
+        const trailer = data.videos?.results?.find(v => v.type === 'Trailer' && v.site === 'YouTube')?.key;
+
+        // Get director/cast
+        const director = data.credits?.crew?.find(c => c.job === 'Director')?.name || "";
+        const cast = data.credits?.cast?.slice(0, 5).map(c => c.name).join(", ") || "";
+
         return {
             title: data.title || data.name,
             originalTitle: data.original_title || data.original_name,
@@ -34,7 +43,11 @@ export async function getTMDBDetails(id, type = 'movie') {
             desc: data.overview,
             poster: data.poster_path ? TMDB_IMAGE_BASE + data.poster_path : null,
             banner: data.backdrop_path ? TMDB_IMAGE_BASE + data.backdrop_path : null,
-            genres: data.genres ? data.genres.map(g => g.name).join(", ") : ""
+            genres: data.genres ? data.genres.map(g => g.name).join(", ") : "",
+            director: director,
+            cast: cast,
+            trailer: trailer ? `https://www.youtube.com/watch?v=${trailer}` : null,
+            studio: data.production_companies?.[0]?.name || ""
         };
     } catch (error) {
         console.error("TMDB Details Error:", error);

@@ -7,10 +7,11 @@ import { showTab } from './navigation.js';
 import { initMediaForm, setMediaTypeUI, handleSaveMedia, addSeason, handleTMDBFetch } from '../components/media-form.js';
 import { renderCatalog, filterList, selectAll, handleDeleteBulk } from '../components/catalog-renderer.js';
 import { renderFranchises, handleSaveFranchise } from '../components/franchise-manager.js';
-import { showVideoPreview, analyzeLinkType, showAnalysis } from '../utils/dom-helper.js';
-import { initDashboard, updateDashboardStats } from '../components/dashboard.js';
+import { showToast } from '../components/toast.js';
 
 document.addEventListener('DOMContentLoaded', () => {
+    // Global toast availability
+    window.showToast = showToast;
     // Initialize services
     subscribeToMedia((data, isOld) => {
         updateMedia(data, isOld);

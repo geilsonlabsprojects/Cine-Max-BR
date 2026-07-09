@@ -7,51 +7,66 @@ import { fillFormForEdit } from './media-form.js';
 import { showTab } from '../core/navigation.js';
 import { showToast } from '../utils/dom-helper.js';
 
+let itemsPerPage = 20;
+let currentPage = 1;
+
 export function renderCatalog() {
     const list = document.getElementById('mediaList');
     if (!list) return;
 
-    list.innerHTML = '';
-    let moviesCount = 0;
-    let seriesCount = 0;
-    let totalViews = 0;
+    if (currentPage === 1) list.innerHTML = '';
 
     const sortedMedia = Object.values(state.allMedia).sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+    const query = document.getElementById('search')?.value.toLowerCase() || '';
+    const filteredMedia = sortedMedia.filter(item => item.title.toLowerCase().includes(query));
 
-    sortedMedia.forEach(item => {
-        if (item.type === 'movie') moviesCount++; else seriesCount++;
-        totalViews += (item.views || 0);
+    const paginatedMedia = filteredMedia.slice(0, itemsPerPage * currentPage);
+
+    paginatedMedia.forEach(item => {
+        // Skip if already in list (for infinite scroll)
+        if (list.querySelector(`[data-id="${item.id}"]`)) return;
 
         const badgeClass = item.type === 'movie' ? 'badge-movie' : 'badge-series';
         const featuredBadge = item.featured ? '<span class="badge bg-warning text-dark ms-2" style="font-size: 8px;">DESTAQUE</span>' : '';
 
         const itemHtml = `
-            <div class="media-item" data-title="${item.title.toLowerCase()}" data-id="${item.id}">
-                <input type="checkbox" data-id="${item.id}" ${state.selectedIds.has(item.id) ? 'checked' : ''}>
-                <img src="${item.poster || ''}" class="poster-mini" loading="lazy">
+            <div class="media-item animate-fade-in" data-title="${item.title.toLowerCase()}" data-id="${item.id}">
+                <div class="d-flex align-items-center gap-3">
+                    <input type="checkbox" data-id="${item.id}" ${state.selectedIds.has(item.id) ? 'checked' : ''} class="form-check-input">
+                    <img src="${item.poster || ''}" class="poster-mini" loading="lazy">
+                </div>
                 <div>
                     <div class="fw-bold text-truncate" style="max-width: 300px;">${item.title} ${featuredBadge}</div>
                     <div class="small text-dim text-truncate" style="max-width: 300px;">${item.genre || ''}</div>
                 </div>
                 <div class="badge-type ${badgeClass}">${item.type.toUpperCase()} ${item.type === 'series' ? `(${item.seasons?.length || 0} Temp)` : ''}</div>
                 <div class="text-dim text-center">${item.year || 'N/A'}</div>
-                <div class="d-flex gap-2">
-                    <button class="btn btn-sm btn-outline-info btn-edit" data-id="${item.id}"><i class="fas fa-edit"></i></button>
-                    <button class="btn btn-sm btn-outline-danger btn-delete" data-id="${item.id}" data-old="${item.isOld || false}"><i class="fas fa-trash"></i></button>
+                <div class="text-dim text-center"><i class="fas fa-eye me-1"></i>${item.views || 0}</div>
+                <div class="d-flex gap-2 justify-content-end">
+                    <button class="btn btn-sm btn-outline-info btn-edit" data-id="${item.id}" title="Editar"><i class="fas fa-edit"></i></button>
+                    <button class="btn btn-sm btn-outline-danger btn-delete" data-id="${item.id}" data-old="${item.isOld || false}" title="Excluir"><i class="fas fa-trash"></i></button>
                 </div>
             </div>
         `;
         list.insertAdjacentHTML('beforeend', itemHtml);
     });
 
-    // Update stats
-    document.getElementById('statMovies').innerText = moviesCount;
-    document.getElementById('statSeries').innerText = seriesCount;
-    document.getElementById('statViews').innerText = totalViews.toLocaleString();
+    if (currentPage === 1) initInfiniteScroll();
 
-    // Attach event listeners
     attachCatalogListeners();
     updateBulkBar();
+}
+
+function initInfiniteScroll() {
+    window.onscroll = () => {
+        if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight - 500) {
+            const totalItems = Object.keys(state.allMedia).length;
+            if (itemsPerPage * currentPage < totalItems) {
+                currentPage++;
+                renderCatalog();
+            }
+        }
+    };
 }
 
 function attachCatalogListeners() {
@@ -109,11 +124,8 @@ export async function handleDeleteBulk() {
 }
 
 export function filterList() {
-    const query = document.getElementById('search').value.toLowerCase();
-    document.querySelectorAll('#mediaList .media-item').forEach(el => {
-        const title = el.getAttribute('data-title');
-        el.style.display = title.includes(query) ? 'grid' : 'none';
-    });
+    currentPage = 1;
+    renderCatalog();
 }
 
 export function selectAll(checked) {

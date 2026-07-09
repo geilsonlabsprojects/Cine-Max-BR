@@ -1,3 +1,4 @@
+@import url('premium.css');
 @import url('sidebar.css');
 @import url('cards.css');
 @import url('forms.css');
@@ -6,14 +7,14 @@
 :root {
     --accent: #E50914;
     --accent-glow: rgba(229, 9, 20, 0.4);
-    --bg: #08080A;
-    --surface: #111116;
-    --surface-light: #1A1A22;
+    --bg: #000000;
+    --surface: #0A0A0E;
+    --surface-light: #12121A;
     --text: #FFFFFF;
     --text-dim: #94A3B8;
     --glass: rgba(255, 255, 255, 0.03);
     --border: rgba(255, 255, 255, 0.08);
-    --transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 body {

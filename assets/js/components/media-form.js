@@ -4,7 +4,8 @@
 import { state } from '../core/state.js';
 import { saveMediaItem } from '../services/firebase-service.js';
 import { extractUrl } from '../utils/url-helper.js';
-import { updateImagePreview, showVideoPreview, analyzeLinkType, showAnalysis, showToast } from '../utils/dom-helper.js';
+import { updateImagePreview, showVideoPreview, analyzeLinkType, showAnalysis } from '../utils/dom-helper.js';
+import { showToast } from './toast.js';
 import { searchTMDB, getTMDBDetails } from '../services/tmdb-service.js';
 
 export function initMediaForm() {

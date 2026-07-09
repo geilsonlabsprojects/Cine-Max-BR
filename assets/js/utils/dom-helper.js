@@ -35,24 +35,6 @@ export function showVideoPreview(containerId, url) {
     };
 }
 
-export function showToast(message, type = 'info') {
-    const toastEl = document.getElementById('appToast');
-    const messageEl = document.getElementById('toastMessage');
-    if (!toastEl || !messageEl) return;
-
-    messageEl.innerText = message;
-
-    // Set color based on type
-    toastEl.className = 'toast align-items-center text-white border-0';
-    if (type === 'success') toastEl.classList.add('bg-success');
-    else if (type === 'error') toastEl.classList.add('bg-danger');
-    else if (type === 'warning') toastEl.classList.add('bg-warning');
-    else toastEl.classList.add('bg-dark');
-
-    const toast = new bootstrap.Toast(toastEl, { delay: 3000, autohide: true });
-    toast.show();
-}
-
 export function analyzeLinkType(url) {
     if (!url) return null;
 

@@ -3,7 +3,7 @@
  */
 import { state } from '../core/state.js';
 import { saveFranchiseItem, deleteFranchiseItem } from '../services/firebase-service.js';
-import { showToast } from '../utils/dom-helper.js';
+import { showToast } from './toast.js';
 
 export function renderFranchises() {
     const select = document.getElementById('mFranchise');

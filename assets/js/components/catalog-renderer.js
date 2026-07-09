@@ -5,7 +5,7 @@ import { state, toggleSelection, clearSelection } from '../core/state.js';
 import { deleteMediaItem } from '../services/firebase-service.js';
 import { fillFormForEdit } from './media-form.js';
 import { showTab } from '../core/navigation.js';
-import { showToast } from '../utils/dom-helper.js';
+import { showToast } from './toast.js';
 
 let itemsPerPage = 20;
 let currentPage = 1;

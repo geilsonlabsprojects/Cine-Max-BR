@@ -88,6 +88,97 @@ export function initControls(video, container, mediaItem) {
         };
     }
 
+    const qualityBtn = container.querySelector('#qualityBtn');
+    const qualityMenu = container.querySelector('#qualityMenu');
+    const qualityLevels = container.querySelector('#qualityLevels');
+
+    // Quality Toggle
+    qualityBtn.onclick = (e) => {
+        e.stopPropagation();
+        qualityMenu.style.display = qualityMenu.style.display === 'none' ? 'block' : 'none';
+    };
+
+    document.addEventListener('click', () => {
+        if (qualityMenu) qualityMenu.style.display = 'none';
+    });
+
+    // HLS Events for Quality
+    window.addEventListener('hlsLevels', (e) => {
+        const levels = e.detail;
+        if (!qualityLevels) return;
+
+        let html = `<div class="quality-item active" data-level="-1">Automático</div>`;
+        levels.forEach((level, index) => {
+            const label = level.height ? `${level.height}p` : `Nível ${index}`;
+            html += `<div class="quality-item" data-level="${index}">${label}</div>`;
+        });
+        qualityLevels.innerHTML = html;
+
+        qualityLevels.querySelectorAll('.quality-item').forEach(item => {
+            item.onclick = () => {
+                const level = parseInt(item.dataset.level);
+                // Dispatch event to HLS engine
+                window.dispatchEvent(new CustomEvent('hlsSwitchLevel', { detail: level }));
+
+                qualityLevels.querySelectorAll('.quality-item').forEach(el => el.classList.remove('active'));
+                item.classList.add('active');
+            };
+        });
+    });
+
+    // Keyboard Shortcuts
+    const handleKeyDown = (e) => {
+        // Only run shortcuts if player is visible and not typing in an input
+        if (container.offsetParent === null || e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+
+        switch (e.code) {
+            case 'Space':
+            case 'KeyK':
+                e.preventDefault();
+                togglePlay();
+                break;
+            case 'ArrowLeft':
+            case 'KeyJ':
+                e.preventDefault();
+                video.currentTime -= 10;
+                break;
+            case 'ArrowRight':
+            case 'KeyL':
+                e.preventDefault();
+                video.currentTime += 10;
+                break;
+            case 'ArrowUp':
+                e.preventDefault();
+                video.volume = Math.min(1, video.volume + 0.1);
+                volumeSlider.value = video.volume;
+                break;
+            case 'ArrowDown':
+                e.preventDefault();
+                video.volume = Math.max(0, video.volume - 0.1);
+                volumeSlider.value = video.volume;
+                break;
+            case 'KeyF':
+                e.preventDefault();
+                fullscreenBtn.click();
+                break;
+            case 'KeyM':
+                e.preventDefault();
+                video.muted = !video.muted;
+                volumeBtn.innerHTML = video.muted ? '<i class="fas fa-volume-mute"></i>' : '<i class="fas fa-volume-up"></i>';
+                break;
+        }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+
+    // Cleanup listeners when player is destroyed
+    const cleanup = () => {
+        window.removeEventListener('keydown', handleKeyDown);
+    };
+
+    // Store cleanup on video element to be called later if needed
+    video._playerCleanup = cleanup;
+
     // Loading State
     video.onwaiting = () => { if (loadingOverlay) loadingOverlay.style.display = 'flex'; };
     video.oncanplay = () => { if (loadingOverlay) loadingOverlay.style.display = 'none'; };

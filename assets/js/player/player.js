@@ -35,6 +35,11 @@ export class WebPlayer {
 
         initControls(this.video, this.mountPoint.querySelector('#playerContainer'), item);
 
+        // Listen for quality switch
+        window.addEventListener('hlsSwitchLevel', (e) => {
+            if (this.engine) this.engine.switchLevel(e.detail);
+        });
+
         // Resume from saved time
         if (startTime > 0) {
             this.video.onloadedmetadata = () => {
@@ -47,6 +52,9 @@ export class WebPlayer {
     }
 
     stop() {
+        if (this.video && this.video._playerCleanup) {
+            this.video._playerCleanup();
+        }
         if (this.engine) {
             this.engine.destroy();
             this.engine = null;

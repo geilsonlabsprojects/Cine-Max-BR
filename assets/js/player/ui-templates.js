@@ -36,7 +36,15 @@ export const playerTemplate = `
                         <button id="volumeBtn" class="control-btn"><i class="fas fa-volume-up"></i></button>
                         <input type="range" id="volumeSlider" min="0" max="1" step="0.1" value="1">
                     </div>
-                    <button id="qualityBtn" class="control-btn"><i class="fas fa-cog"></i></button>
+                    <div class="quality-wrapper">
+                        <button id="qualityBtn" class="control-btn"><i class="fas fa-cog"></i></button>
+                        <div id="qualityMenu" class="quality-menu" style="display: none;">
+                            <div class="quality-menu-header">Qualidade</div>
+                            <div id="qualityLevels">
+                                <!-- Qualidades dinâmicas aqui -->
+                            </div>
+                        </div>
+                    </div>
                     <button id="fullscreenBtn" class="control-btn"><i class="fas fa-expand"></i></button>
                 </div>
             </div>

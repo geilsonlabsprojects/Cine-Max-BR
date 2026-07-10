@@ -302,7 +302,8 @@ function renderHyperUI() {
         movies: document.getElementById('moviesGrid'),
         series: document.getElementById('seriesGrid'),
         kids: document.getElementById('kidsGrid'),
-        franchise: document.getElementById('franchiseSection')
+        franchise: document.getElementById('franchiseSection'),
+        catalog: document.getElementById('catalogGrid')
     };
 
     updateHero();
@@ -311,6 +312,22 @@ function renderHyperUI() {
     if (sections.series) renderGrid(sections.series, allMedia.filter(m => m.type === 'series' && !m.isOld && !isKids(m)));
     if (sections.kids) renderGrid(sections.kids, allMedia.filter(m => isKids(m)));
     if (sections.franchise) renderFranchiseGroupsUI(sections.franchise);
+
+    // Lógica para catalog.html
+    if (sections.catalog) {
+        const params = new URLSearchParams(window.location.search);
+        const type = params.get('type');
+        let filtered = [];
+
+        if (type === 'movie') filtered = allMedia.filter(m => m.type === 'movie');
+        else if (type === 'series') filtered = allMedia.filter(m => m.type === 'series');
+        else if (type === 'favorites') {
+            const favs = JSON.parse(localStorage.getItem('cinemax_favorites') || '[]');
+            filtered = allMedia.filter(m => favs.includes(m.id));
+        }
+
+        renderGrid(sections.catalog, filtered);
+    }
 
     renderWatchlist();
 }
@@ -490,22 +507,7 @@ window.startPlayback = function(id) {
     if (!item) return;
 
     incrementViews(item.id, item.isOld);
-    const url = item.videoUrl || item.trailerUrl;
-
-    bootstrap.Modal.getInstance(document.getElementById('detailsModal'))?.hide();
-
-    if (!url) {
-        alert("Vídeo não disponível.");
-        return;
-    }
-
-    // Get saved progress
-    const history = JSON.parse(localStorage.getItem(`cinemax_history_${currentUser?.uid}`) || '[]');
-    const savedItem = history.find(h => h.id === id);
-    const startTime = savedItem ? (savedItem.time || 0) : 0;
-
-    document.getElementById('playerOverlay').style.display = 'block';
-    player.render(item, url, startTime);
+    window.location.href = `player.html?id=${id}`;
 };
 
 window.saveProgress = function(item, currentTime, duration) {

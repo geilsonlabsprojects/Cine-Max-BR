@@ -19,6 +19,14 @@ export class HLSEngine {
         // Force native playback for these sources to avoid CORS/HLS.js overhead
         if (isArchiveOrg || isGoogleDrive || isDirectVideo || !Hls.isSupported()) {
             console.log("Playing via Native HTML5 (Archive/Drive/Direct)");
+
+            // Remove crossorigin for Archive.org direct links to help with some CORS redirects
+            if (isArchiveOrg) {
+                this.video.removeAttribute('crossorigin');
+            } else {
+                this.video.setAttribute('crossorigin', 'anonymous');
+            }
+
             this.video.src = url;
             this.video.load();
             this.video.play().catch(e => {

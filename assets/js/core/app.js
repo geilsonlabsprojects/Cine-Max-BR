@@ -340,28 +340,28 @@ window.openDetails = function(item) {
     if (!modalBody) return;
 
     modalBody.innerHTML = `
-        <div class="media-detail-backdrop" style="background-image: url('${item.banner || item.poster}')"></div>
-        <div class="row g-0 position-relative glass-detail">
-            <div class="col-md-4 d-none d-md-block p-4">
-                <img src="${item.poster}" class="img-fluid rounded-4 shadow-2xl">
+        <div class="media-detail-backdrop" style="background-image: url('${item.banner || item.poster}'); z-index: 1;"></div>
+        <div class="row g-0 position-relative glass-detail" style="z-index: 2;">
+            <div class="col-md-4 d-none d-md-block p-4" style="z-index: 10;">
+                <img src="${item.poster}" class="img-fluid rounded-4 shadow-2xl animate-fade-in poster-main">
             </div>
-            <div class="col-md-8 p-4 p-md-5">
+            <div class="col-md-8 p-4 p-md-5" style="z-index: 10;">
                 <div class="d-flex justify-content-between align-items-start mb-3">
-                    <span class="badge bg-danger rounded-pill px-3">${item.type.toUpperCase()}</span>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    <span class="badge bg-danger rounded-pill px-3 shadow-sm">${item.type.toUpperCase()}</span>
+                    <button type="button" class="btn-close btn-close-white shadow-none" data-bs-dismiss="modal"></button>
                 </div>
-                <h1 class="display-4 fw-900 mb-2">${item.title}</h1>
+                <h1 class="display-4 fw-900 mb-2 cinematic-title">${item.title}</h1>
                 <div class="d-flex gap-3 mb-4 text-white-50 small fw-bold">
-                    <span><i class="fas fa-star text-warning me-2"></i>${item.rating || '8.5'}</span>
-                    <span>${item.year}</span>
-                    <span>${item.genre}</span>
+                    <span class="text-warning"><i class="fas fa-star me-2"></i>${item.rating || '8.5'}</span>
+                    <span class="text-white-50">${item.year}</span>
+                    <span class="text-white-50">${item.genre}</span>
                 </div>
-                <p class="lead mb-4 description-text">${item.desc}</p>
+                <p class="lead mb-4 description-text text-white" style="opacity: 0.95;">${item.desc}</p>
                 <div class="d-flex flex-wrap gap-3 mt-4">
-                    <button class="btn btn-danger btn-lg px-5 rounded-pill fw-bold" onclick="startPlayback('${item.id}')">
+                    <button class="btn btn-danger btn-lg px-5 rounded-pill fw-bold btn-hyper" onclick="startPlayback('${item.id}')">
                         <i class="fas fa-play me-2"></i> ASSISTIR
                     </button>
-                    <button class="btn btn-outline-light btn-lg px-4 rounded-pill" onclick="toggleFavorite('${item.id}', this)">
+                    <button class="btn btn-outline-light btn-lg px-4 rounded-pill action-btn" onclick="toggleFavorite('${item.id}', this)">
                         <i class="${isFavorite(item.id) ? 'fas' : 'far'} fa-heart"></i>
                     </button>
                 </div>

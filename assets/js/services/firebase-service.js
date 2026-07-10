@@ -37,6 +37,16 @@ export function subscribeToMedia(callback) {
     });
 }
 
+export async function incrementViews(id, isOld = false) {
+    try {
+        const path = isOld ? `movies/${id}/views` : `media/${id}/views`;
+        const ref = db.ref(path);
+        await ref.transaction(current => (current || 0) + 1);
+    } catch (e) {
+        console.error("Error incrementing views:", e);
+    }
+}
+
 export function subscribeToOldMovies(callback) {
     db.ref('movies').on('value', snap => {
         const data = [];
@@ -45,4 +55,14 @@ export function subscribeToOldMovies(callback) {
         });
         callback(data);
     });
+}
+
+export async function incrementViews(id, isOld = false) {
+    try {
+        const path = isOld ? `movies/${id}/views` : `media/${id}/views`;
+        const ref = db.ref(path);
+        await ref.transaction(current => (current || 0) + 1);
+    } catch (e) {
+        console.error("Error incrementing views:", e);
+    }
 }

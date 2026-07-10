@@ -21,15 +21,39 @@
 
     <!-- Access Gate -->
     <div id="accessGate" style="position: fixed; inset: 0; background: #000; z-index: 20000; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(20px);">
-        <div class="glass-card text-center p-5 animate-fade-in" style="max-width: 450px; border: 1px solid var(--accent);">
-            <div class="brand mb-4 fs-2"><i class="fas fa-play-circle"></i> CINEMAX<span>BR</span></div>
-            <h4 class="fw-800 mb-3">Área Restrita</h4>
-            <p class="text-dim small mb-4">Insira sua chave de acesso gerada pelo administrador para entrar.</p>
-            <div class="mb-4">
-                <input type="password" id="accessCodeInput" class="form-control-pro text-center fs-4" placeholder="••••••••" style="letter-spacing: 0.5em;">
+        <div class="glass-card text-center p-5 animate-fade-in" style="max-width: 480px; border: 1px solid var(--accent); position: relative;">
+            <div id="codeStep">
+                <div class="brand mb-4 fs-2"><i class="fas fa-play-circle"></i> CINEMAX<span>BR</span></div>
+                <h4 class="fw-800 mb-3">Área Restrita</h4>
+                <p class="text-dim small mb-4">Insira sua chave de acesso gerada pelo administrador para entrar.</p>
+                <div class="mb-4">
+                    <input type="password" id="accessCodeInput" class="form-control-pro text-center fs-4" placeholder="••••••••" style="letter-spacing: 0.5em;">
+                </div>
+                <button class="btn-hyper w-100" id="btnVerifyAccess">ENTRAR AGORA</button>
+                <p id="accessError" class="text-danger small mt-3" style="display: none;">Chave inválida ou expirada.</p>
             </div>
-            <button class="btn-hyper w-100" id="btnVerifyAccess">ENTRAR AGORA</button>
-            <p id="accessError" class="text-danger small mt-3" style="display: none;">Chave inválida ou expirada.</p>
+
+            <div id="termsStep" style="display: none;">
+                <div class="brand mb-4 fs-2"><i class="fas fa-shield-alt"></i> TERMOS<span>&</span>PRIVACIDADE</div>
+                <h4 class="fw-800 mb-3">Contrato de Uso</h4>
+                <div class="terms-scroll p-3 mb-4 text-start small text-dim" style="height: 180px; overflow-y: auto; background: rgba(255,255,255,0.05); border-radius: 10px;">
+                    Ao acessar o CineMaxBR, você concorda que:
+                    <ol>
+                        <li>Este portal é para uso estritamente pessoal e privado.</li>
+                        <li>O compartilhamento de sua chave de acesso é proibido.</li>
+                        <li>Respeitamos sua privacidade e não coletamos dados sensíveis sem consentimento.</li>
+                        <li>Os links de mídia são indexados de fontes externas.</li>
+                    </ol>
+                    Leia na íntegra: <a href="politica-de-privacidade.html" target="_blank" class="text-accent">Privacidade</a> e <a href="termo-de-servico.html" target="_blank" class="text-accent">Termos</a>.
+                </div>
+                <div class="form-check text-start mb-4">
+                    <input class="form-check-input" type="checkbox" id="checkTerms">
+                    <label class="form-check-label small text-white" for="checkTerms">
+                        Eu li e aceito os termos e a política de privacidade.
+                    </label>
+                </div>
+                <button class="btn-hyper w-100" id="btnAcceptTerms" disabled>CONCORDAR E CONTINUAR</button>
+            </div>
         </div>
     </div>
 
@@ -47,7 +71,7 @@
                     <li class="nav-item"><a class="nav-link" href="#kids">Kids</a></li>
                 </ul>
                 <div class="d-flex align-items-center gap-4">
-                    <i class="fas fa-search cursor-pointer fs-5"></i>
+                    <i class="fas fa-search cursor-pointer fs-5" id="btnOpenSearch"></i>
                     <i class="fas fa-bell cursor-pointer fs-5"></i>
                     <div class="avatar-circle"></div>
                 </div>
@@ -95,7 +119,28 @@
                 <!-- Dynamic Content -->
             </div>
         </section>
+
+        <section id="kids" class="mb-5">
+            <h2 class="section-title">Para Toda a Família</h2>
+            <div class="row g-4" id="kidsGrid">
+                <!-- Dynamic Content -->
+            </div>
+        </section>
     </main>
+
+    <!-- Search Overlay -->
+    <div id="searchOverlay" class="search-overlay">
+        <div class="search-header">
+            <div class="container-fluid px-5 d-flex align-items-center gap-4">
+                <i class="fas fa-search fs-3 text-accent"></i>
+                <input type="text" id="searchInput" class="search-input" placeholder="Títulos, gêneros ou tags..." autocomplete="off">
+                <i class="fas fa-times fs-3 cursor-pointer" id="btnCloseSearch"></i>
+            </div>
+        </div>
+        <div class="container-fluid px-5 py-5 mt-5" style="height: calc(100vh - 100px); overflow-y: auto;">
+            <div id="searchResults" class="row g-4"></div>
+        </div>
+    </div>
 
     <!-- Details Modal -->
     <div class="modal fade" id="detailsModal" tabindex="-1">

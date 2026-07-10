@@ -12,6 +12,7 @@ let allMedia = [];
 let allFranchises = {};
 let groupedFranchises = {};
 let currentUser = null;
+let currentFilter = 'all';
 const player = new WebPlayer('videoContainer');
 
 // Inicialização segura
@@ -52,6 +53,80 @@ function initAuthObserver() {
             setupAuthEvents();
         }
     });
+}
+
+// Filtros e Categorias
+window.filterCategory = (category) => {
+    currentFilter = category;
+    document.querySelectorAll('.category-pill, .sidebar-item').forEach(el => el.classList.remove('active'));
+
+    // Update UI
+    const pills = document.querySelectorAll(`.category-pill`);
+    pills.forEach(p => {
+        if (p.innerText.toLowerCase() === category.toLowerCase() || (category === 'all' && p.innerText === 'Tudo')) {
+            p.classList.add('active');
+        }
+    });
+
+    renderAllSections();
+};
+
+function renderAllSections() {
+    const moviesGrid = document.getElementById('moviesGrid');
+    const seriesGrid = document.getElementById('seriesGrid');
+    const kidsGrid = document.getElementById('kidsGrid');
+
+    if (!moviesGrid || !seriesGrid || !kidsGrid) return;
+
+    // Filter Logic
+    const filtered = allMedia.filter(item => {
+        if (currentFilter === 'all') return true;
+        if (currentFilter === 'movie') return item.type === 'movie';
+        if (currentFilter === 'series') return item.type === 'series';
+
+        const genre = (item.genre || '').toLowerCase();
+        const type = (item.type || '').toLowerCase();
+        const filter = currentFilter.toLowerCase();
+
+        return genre.includes(filter) || type === filter || (item.tags && item.tags.toLowerCase().includes(filter));
+    });
+
+    renderGrid(moviesGrid, filtered.filter(m => m.type === 'movie' && m.genre !== 'Kids'));
+    renderGrid(seriesGrid, filtered.filter(m => m.type === 'series'));
+    renderGrid(kidsGrid, filtered.filter(m => m.genre === 'Kids'));
+
+    renderFranchises(filtered);
+    renderContinueWatching();
+}
+
+/**
+ * Continue Assistindo
+ */
+function renderContinueWatching() {
+    const section = document.getElementById('continueWatchingSection');
+    const grid = document.getElementById('continueWatchingGrid');
+    if (!section || !grid) return;
+
+    const history = JSON.parse(localStorage.getItem(`cinemax_history_${currentUser?.uid}`) || '[]');
+    if (history.length === 0) {
+        section.style.display = 'none';
+        return;
+    }
+
+    section.style.display = 'block';
+    grid.innerHTML = history.slice(0, 6).map(item => `
+        <div class="col">
+            <div class="media-card" onclick="startPlayback('${item.id}')">
+                <img src="${item.poster}" class="img-lazy" onload="this.classList.add('img-loaded')">
+                <div class="media-card-info">
+                    <div class="progress mb-2" style="height: 4px; background: rgba(255,255,255,0.2);">
+                        <div class="progress-bar bg-danger" style="width: ${item.progress}%"></div>
+                    </div>
+                    <h6 class="mb-0 text-truncate">${item.title}</h6>
+                </div>
+            </div>
+        </div>
+    `).join('');
 }
 
 function showStep(stepId) {
@@ -404,14 +479,118 @@ window.startPlayback = function(id) {
         return;
     }
 
+    // Get saved progress
+    const history = JSON.parse(localStorage.getItem(`cinemax_history_${currentUser?.uid}`) || '[]');
+    const savedItem = history.find(h => h.id === id);
+    const startTime = savedItem ? (savedItem.time || 0) : 0;
+
     document.getElementById('playerOverlay').style.display = 'block';
-    player.render(item, url);
+    player.render(item, url, startTime);
+};
+
+window.saveProgress = function(item, currentTime, duration) {
+    if (!currentUser || !item || isNaN(currentTime) || isNaN(duration) || duration === 0) return;
+
+    const progress = Math.floor((currentTime / duration) * 100);
+    // Don't save if it's less than 1% or more than 95% (assume finished)
+    if (progress < 1) return;
+
+    let history = JSON.parse(localStorage.getItem(`cinemax_history_${currentUser.uid}`) || '[]');
+
+    // Remove if exists to re-add at the top
+    history = history.filter(h => h.id !== item.id);
+
+    if (progress < 95) {
+        history.unshift({
+            id: item.id,
+            title: item.title,
+            poster: item.poster,
+            progress: progress,
+            time: currentTime,
+            duration: duration,
+            timestamp: Date.now()
+        });
+    }
+
+    // Keep only last 20 items
+    localStorage.setItem(`cinemax_history_${currentUser.uid}`, JSON.stringify(history.slice(0, 20)));
+
+    // Refresh UI if home section is visible
+    renderContinueWatching();
 };
 
 window.closePlayer = () => {
-    document.getElementById('playerOverlay').style.display = 'none';
+    const overlay = document.getElementById('playerOverlay');
+    overlay.style.display = 'none';
+    overlay.classList.remove('mini-mode');
+    overlay.style.transform = '';
+    overlay.style.top = '0';
+    overlay.style.left = '0';
+    overlay.style.width = '100%';
+    overlay.style.height = '100%';
     player.stop();
 };
+
+window.toggleMiniPlayer = () => {
+    const overlay = document.getElementById('playerOverlay');
+    const isMini = overlay.classList.toggle('mini-mode');
+
+    if (isMini) {
+        overlay.style.width = '350px';
+        overlay.style.height = '200px';
+        overlay.style.top = 'auto';
+        overlay.style.bottom = '30px';
+        overlay.style.left = 'auto';
+        overlay.style.right = '30px';
+        overlay.style.borderRadius = '16px';
+        overlay.style.boxShadow = '0 20px 50px rgba(0,0,0,0.8)';
+        overlay.style.border = '2px solid var(--accent)';
+        overlay.style.overflow = 'hidden';
+        initDraggable(overlay);
+    } else {
+        overlay.style.width = '100%';
+        overlay.style.height = '100%';
+        overlay.style.top = '0';
+        overlay.style.bottom = '0';
+        overlay.style.left = '0';
+        overlay.style.right = '0';
+        overlay.style.borderRadius = '0';
+        overlay.style.boxShadow = 'none';
+        overlay.style.border = 'none';
+        overlay.style.transform = '';
+    }
+};
+
+function initDraggable(el) {
+    let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
+    el.onmousedown = dragMouseDown;
+
+    function dragMouseDown(e) {
+        if (e.target.closest('.video-controls')) return; // Don't drag if interacting with controls
+        e.preventDefault();
+        pos3 = e.clientX;
+        pos4 = e.clientY;
+        document.onmouseup = closeDragElement;
+        document.onmousemove = elementDrag;
+    }
+
+    function elementDrag(e) {
+        e.preventDefault();
+        pos1 = pos3 - e.clientX;
+        pos2 = pos4 - e.clientY;
+        pos3 = e.clientX;
+        pos4 = e.clientY;
+        el.style.top = (el.offsetTop - pos2) + "px";
+        el.style.left = (el.offsetLeft - pos1) + "px";
+        el.style.bottom = 'auto';
+        el.style.right = 'auto';
+    }
+
+    function closeDragElement() {
+        document.onmouseup = null;
+        document.onmousemove = null;
+    }
+}
 
 // Favoritos e Watchlist
 window.isFavorite = (id) => JSON.parse(localStorage.getItem('cinemax_favorites') || '[]').includes(id);

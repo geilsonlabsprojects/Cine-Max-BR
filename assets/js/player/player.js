@@ -12,13 +12,14 @@ export class WebPlayer {
         this.video = null;
     }
 
-    render(item, url) {
+    render(item, url, startTime = 0) {
         if (!this.mountPoint) return;
 
         // Clean up previous state
         this.stop();
 
         this.mountPoint.innerHTML = playerTemplate;
+        this.currentItem = item; // Store for progress saving
 
         // Add title info if available
         const titleContainer = document.createElement('div');
@@ -32,7 +33,14 @@ export class WebPlayer {
         this.video = this.mountPoint.querySelector('#mainVideo');
         this.engine = new HLSEngine(this.video);
 
-        initControls(this.video, this.mountPoint.querySelector('#playerContainer'));
+        initControls(this.video, this.mountPoint.querySelector('#playerContainer'), item);
+
+        // Resume from saved time
+        if (startTime > 0) {
+            this.video.onloadedmetadata = () => {
+                this.video.currentTime = startTime;
+            };
+        }
 
         // Load source
         this.engine.loadSource(url);
@@ -45,7 +53,7 @@ export class WebPlayer {
         }
         if (this.video) {
             this.video.pause();
-            this.video.src = "";
+            this.video.removeAttribute('src'); // Better than src=""
             this.video.load();
             this.video = null;
         }

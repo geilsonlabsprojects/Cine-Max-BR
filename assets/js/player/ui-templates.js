@@ -31,6 +31,7 @@ export const playerTemplate = `
                 </div>
 
                 <div class="controls-right">
+                    <button id="pipBtn" class="control-btn" title="Mini Player"><i class="fas fa-external-link-alt"></i></button>
                     <div class="volume-container">
                         <button id="volumeBtn" class="control-btn"><i class="fas fa-volume-up"></i></button>
                         <input type="range" id="volumeSlider" min="0" max="1" step="0.1" value="1">

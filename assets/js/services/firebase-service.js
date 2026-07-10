@@ -19,8 +19,16 @@ export const db = firebase.database();
 export const auth = firebase.auth();
 
 export async function googleLogin() {
-    const provider = new firebase.auth.GoogleAuthProvider();
-    return auth.signInWithPopup(provider);
+    try {
+        const provider = new firebase.auth.GoogleAuthProvider();
+        return await auth.signInWithPopup(provider);
+    } catch (error) {
+        if (error.code === 'auth/popup-closed-by-user' || error.code === 'auth/cancelled-by-user') {
+            console.log("Login cancelado pelo usuário.");
+            return null;
+        }
+        throw error;
+    }
 }
 
 export async function checkUserAuthorization(uid) {

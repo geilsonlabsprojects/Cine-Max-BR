@@ -16,12 +16,11 @@ export class HLSEngine {
         const isDirectVideo = url.toLowerCase().endsWith('.mp4') || url.toLowerCase().endsWith('.webm');
 
         if (isArchiveOrg || isGoogleDrive || isDirectVideo || !Hls.isSupported()) {
-            console.log("Playing via Native HTML5");
             if (isArchiveOrg) this.video.removeAttribute('crossorigin');
             else this.video.setAttribute('crossorigin', 'anonymous');
             this.video.src = url;
             this.video.load();
-            this.video.play().catch(e => { if (e.name !== 'AbortError') console.error("Native playback failed", e); });
+            this.video.play().catch(e => { if (e.name !== 'AbortError') console.error("Playback failed", e); });
             return;
         }
 

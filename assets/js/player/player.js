@@ -25,8 +25,8 @@ export class WebPlayer {
         const titleContainer = document.createElement('div');
         titleContainer.className = 'player-info-overlay';
         titleContainer.innerHTML = `
-            <div class="fw-bold fs-4">${item?.title || 'Conteúdo'}</div>
-            <div class="text-white-50 small">${item?.year || ''} • ${item?.type === 'series' ? 'Série' : 'Filme'}</div>
+            <div class="title">${item?.title || 'Conteúdo'}</div>
+            <div class="subtitle">${item?.year || ''} • ${item?.type === 'series' ? 'Série' : 'Filme'}</div>
         `;
         this.mountPoint.querySelector('#playerContainer').prepend(titleContainer);
 

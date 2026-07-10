@@ -3,11 +3,11 @@
  */
 export const playerTemplate = `
     <div class="video-player-container glass" id="playerContainer">
-        <video id="mainVideo" class="main-video"></video>
+        <video id="mainVideo" class="main-video" crossorigin="anonymous"></video>
 
         <!-- Loading Overlay -->
-        <div id="playerLoading" class="player-overlay">
-            <div class="spinner-border text-accent" role="status">
+        <div id="playerLoading" class="player-overlay" style="display: flex;">
+            <div class="spinner-border text-accent" role="status" style="width: 3rem; height: 3rem;">
                 <span class="visually-hidden">Loading...</span>
             </div>
         </div>

@@ -15,6 +15,32 @@ if (!firebase.apps.length && firebaseConfig.apiKey) {
 }
 
 export const db = firebase.database();
+export const auth = firebase.auth();
+
+export async function googleLogin() {
+    const provider = new firebase.auth.GoogleAuthProvider();
+    return auth.signInWithPopup(provider);
+}
+
+export async function checkUserAuthorization(uid) {
+    const snapshot = await db.ref(`users/${uid}/authorized`).once('value');
+    return snapshot.val() === true;
+}
+
+export async function linkAccount(uid, code) {
+    const codeSnap = await db.ref('access_codes').child(code).once('value');
+    if (codeSnap.exists()) {
+        // Link the UID to authorization and delete the one-time code if necessary
+        // In this implementation, we just set authorized = true for the user
+        await db.ref(`users/${uid}`).update({
+            authorized: true,
+            linkedAt: firebase.database.ServerValue.TIMESTAMP,
+            accessCode: code
+        });
+        return true;
+    }
+    return false;
+}
 
 export async function verifyAccessCode(code) {
     const snapshot = await db.ref('access_codes').child(code).once('value');

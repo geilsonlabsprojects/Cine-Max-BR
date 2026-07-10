@@ -1,19 +1,23 @@
 /**
  * CineMaxBR HYPER-PREMIUM Core Engine - Otimizado para GitHub Pages
  */
-import { subscribeToMedia, subscribeToOldMovies, verifyAccessCode, incrementViews } from '../services/firebase-service.js';
+import {
+    subscribeToMedia, subscribeToOldMovies, verifyAccessCode, incrementViews,
+    googleLogin, checkUserAuthorization, linkAccount, auth
+} from '../services/firebase-service.js';
 import { WebPlayer } from '../player/player.js';
 
 // Cache e Estado Global
 let allMedia = [];
 let allFranchises = {};
 let groupedFranchises = {};
+let currentUser = null;
 const player = new WebPlayer('videoContainer');
 
 // Inicialização segura
 document.addEventListener('DOMContentLoaded', () => {
     try {
-        initAccessControl();
+        initAuthObserver();
         initHyperUI();
         initCustomCursor();
     } catch (error) {
@@ -22,79 +26,95 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 /**
- * Gatekeeper de Acesso com Persistência Segura
+ * Gatekeeper de Acesso com Firebase Auth e Vínculo de Conta
  */
-function initAccessControl() {
-    const isAuthorized = localStorage.getItem('cinemax_access_granted');
-    const termsAccepted = localStorage.getItem('cinemax_terms_accepted');
+function initAuthObserver() {
     const gate = document.getElementById('accessGate');
 
-    if (isAuthorized === 'true' && termsAccepted === 'true') {
-        if (gate) gate.style.display = 'none';
-        startApp();
-    } else {
-        setupGateEvents(gate);
-    }
-}
+    auth.onAuthStateChanged(async (user) => {
+        if (user) {
+            currentUser = user;
+            const isAuthorized = await checkUserAuthorization(user.uid);
+            const termsAccepted = localStorage.getItem(`cinemax_terms_${user.uid}`);
 
-function setupGateEvents(gate) {
-    const codeStep = document.getElementById('codeStep');
-    const termsStep = document.getElementById('termsStep');
-    const btnVerify = document.getElementById('btnVerifyAccess');
-    const input = document.getElementById('accessCodeInput');
-    const error = document.getElementById('accessError');
-    const btnAccept = document.getElementById('btnAcceptTerms');
-    const checkTerms = document.getElementById('checkTerms');
-
-    if (!btnVerify || !input) return;
-
-    if (localStorage.getItem('cinemax_access_granted') === 'true') {
-        if (codeStep) codeStep.style.display = 'none';
-        if (termsStep) termsStep.style.display = 'block';
-    }
-
-    btnVerify.onclick = async () => {
-        const code = input.value.trim();
-        if (!code) return;
-
-        btnVerify.disabled = true;
-        btnVerify.innerText = "VERIFICANDO...";
-
-        try {
-            const isValid = await verifyAccessCode(code);
-            if (isValid) {
-                localStorage.setItem('cinemax_access_granted', 'true');
-                codeStep.classList.add('animate-fade-out');
-                setTimeout(() => {
-                    codeStep.style.display = 'none';
-                    termsStep.style.display = 'block';
-                    termsStep.classList.add('animate-fade-in');
-                }, 400);
-            } else {
-                throw new Error("Código inválido");
-            }
-        } catch (e) {
-            if (error) error.style.display = 'block';
-            btnVerify.disabled = false;
-            btnVerify.innerText = "ENTRAR AGORA";
-            input.value = '';
-            input.focus();
-        }
-    };
-
-    if (checkTerms && btnAccept) {
-        checkTerms.onchange = () => btnAccept.disabled = !checkTerms.checked;
-        btnAccept.onclick = () => {
-            localStorage.setItem('cinemax_terms_accepted', 'true');
-            if (gate) gate.classList.add('animate-fade-out');
-            setTimeout(() => {
+            if (isAuthorized && termsAccepted === 'true') {
                 if (gate) gate.style.display = 'none';
                 startApp();
-            }, 500);
+            } else if (!isAuthorized) {
+                showStep('codeStep');
+                setupAuthEvents();
+            } else {
+                showStep('termsStep');
+                setupAuthEvents();
+            }
+        } else {
+            showStep('loginStep');
+            setupAuthEvents();
+        }
+    });
+}
+
+function showStep(stepId) {
+    ['loginStep', 'codeStep', 'termsStep'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.style.display = (id === stepId) ? 'block' : 'none';
+    });
+}
+
+function setupAuthEvents() {
+    const btnGoogle = document.getElementById('btnGoogleLogin');
+    const btnVerify = document.getElementById('btnVerifyAccess');
+    const btnAccept = document.getElementById('btnAcceptTerms');
+    const input = document.getElementById('accessCodeInput');
+    const checkTerms = document.getElementById('checkTerms');
+    const error = document.getElementById('accessError');
+
+    if (btnGoogle) {
+        btnGoogle.onclick = async () => {
+            try {
+                await googleLogin();
+            } catch (e) {
+                console.error("Login failed", e);
+                alert("Falha no login com Google.");
+            }
         };
     }
 
-    input.onkeypress = (e) => { if (e.key === 'Enter') btnVerify.click(); };
+    if (btnVerify && input) {
+        btnVerify.onclick = async () => {
+            const code = input.value.trim();
+            if (!code || !currentUser) return;
+
+            btnVerify.disabled = true;
+            btnVerify.innerText = "VERIFICANDO...";
+
+            try {
+                const linked = await linkAccount(currentUser.uid, code);
+                if (linked) {
+                    showStep('termsStep');
+                } else {
+                    throw new Error("Código inválido");
+                }
+            } catch (e) {
+                if (error) error.style.display = 'block';
+                btnVerify.disabled = false;
+                btnVerify.innerText = "VINCULAR CONTA";
+                input.value = '';
+            }
+        };
+        input.onkeypress = (e) => { if (e.key === 'Enter') btnVerify.click(); };
+    }
+
+    if (btnAccept && checkTerms) {
+        checkTerms.onchange = () => btnAccept.disabled = !checkTerms.checked;
+        btnAccept.onclick = () => {
+            if (currentUser) {
+                localStorage.setItem(`cinemax_terms_${currentUser.uid}`, 'true');
+                document.getElementById('accessGate').style.display = 'none';
+                startApp();
+            }
+        };
+    }
 }
 
 function startApp() {
@@ -112,10 +132,8 @@ function initLogout() {
         avatar.style.cursor = 'pointer';
         avatar.title = 'Clique para Sair';
         avatar.onclick = () => {
-            if (confirm("Deseja sair e bloquear o acesso com senha novamente?")) {
-                localStorage.removeItem('cinemax_access_granted');
-                localStorage.removeItem('cinemax_terms_accepted');
-                window.location.reload();
+            if (confirm("Deseja sair da sua conta Google?")) {
+                auth.signOut().then(() => window.location.reload());
             }
         };
     }
@@ -232,8 +250,8 @@ function processFranchiseGroups() {
     groupedFranchises = {};
     allMedia.forEach(item => {
         const fId = item.franchiseId;
-        if (fId) {
-            const fName = allFranchises[fId]?.name || fId;
+        if (fId && allFranchises[fId]) { // Somente se a franquia existir
+            const fName = allFranchises[fId].name;
             if (!groupedFranchises[fName]) groupedFranchises[fName] = [];
             groupedFranchises[fName].push(item);
         }

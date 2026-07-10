@@ -4,6 +4,7 @@
 
 const firebaseConfig = {
     apiKey: window.CINE_MAX_CONFIG?.FIREBASE_API_KEY || "",
+    authDomain: window.CINE_MAX_CONFIG?.FIREBASE_AUTH_DOMAIN || (window.CINE_MAX_CONFIG?.FIREBASE_PROJECT_ID ? `${window.CINE_MAX_CONFIG.FIREBASE_PROJECT_ID}.firebaseapp.com` : ""),
     projectId: window.CINE_MAX_CONFIG?.FIREBASE_PROJECT_ID || "",
     databaseURL: window.CINE_MAX_CONFIG?.FIREBASE_DATABASE_URL || "",
     storageBucket: window.CINE_MAX_CONFIG?.FIREBASE_STORAGE_BUCKET || "",

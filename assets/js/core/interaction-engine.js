@@ -9,6 +9,21 @@ class InteractionEngine {
         this.initHyperUI();
         this.initCustomCursor();
         this.initLogout();
+        this.initSidebar();
+    }
+
+    initSidebar() {
+        const navHome = document.getElementById('navHome');
+        if (navHome) {
+            navHome.onclick = (e) => {
+                e.preventDefault();
+                if (window.filterCategory) window.filterCategory('all');
+
+                // Active class management
+                document.querySelectorAll('.sidebar-item').forEach(el => el.classList.remove('active'));
+                navHome.classList.add('active');
+            };
+        }
     }
 
     initHyperUI() {

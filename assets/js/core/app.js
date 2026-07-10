@@ -27,8 +27,7 @@ class App {
             interactionEngine.init();
             searchEngine.init();
 
-            // 4. Global Window Bindings
- (for HTML event handlers)
+            // 4. Global Window Bindings (for HTML event handlers)
             this.bindGlobals();
 
         } catch (error) {

@@ -8,6 +8,9 @@ export class HLSEngine {
     }
 
     loadSource(url) {
+        const loadingOverlay = document.getElementById('playerLoading');
+        if (loadingOverlay) loadingOverlay.style.display = 'flex';
+
         if (Hls.isSupported()) {
             if (this.hls) this.hls.destroy();
 
@@ -21,12 +24,26 @@ export class HLSEngine {
             this.hls.attachMedia(this.video);
 
             this.hls.on(Hls.Events.MANIFEST_PARSED, () => {
-                this.video.play().catch(e => console.log("Auto-play blocked", e));
+                const playPromise = this.video.play();
+                if (playPromise !== undefined) {
+                    playPromise.catch(e => {
+                        if (e.name !== 'AbortError') {
+                            console.log("Auto-play blocked", e);
+                        }
+                    });
+                }
             });
         } else if (this.video.canPlayType('application/vnd.apple.mpegurl')) {
             this.video.src = url;
             this.video.addEventListener('loadedmetadata', () => {
-                this.video.play().catch(e => console.log("Auto-play blocked", e));
+                const playPromise = this.video.play();
+                if (playPromise !== undefined) {
+                    playPromise.catch(e => {
+                        if (e.name !== 'AbortError') {
+                            console.log("Auto-play blocked", e);
+                        }
+                    });
+                }
             });
         }
     }

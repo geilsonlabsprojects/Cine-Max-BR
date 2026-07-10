@@ -68,8 +68,9 @@ export function initControls(video, container) {
     };
 
     // Loading State
-    video.onwaiting = () => loadingOverlay.style.display = 'flex';
-    video.onplaying = () => loadingOverlay.style.display = 'none';
+    video.onwaiting = () => { if (loadingOverlay) loadingOverlay.style.display = 'flex'; };
+    video.oncanplay = () => { if (loadingOverlay) loadingOverlay.style.display = 'none'; };
+    video.onplaying = () => { if (loadingOverlay) loadingOverlay.style.display = 'none'; };
 
     function formatTime(seconds) {
         if (isNaN(seconds)) return "0:00";

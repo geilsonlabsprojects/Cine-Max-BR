@@ -1,0 +1,28 @@
+name: Deploy Web Portal
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Create Config
+        run: |
+          echo "window.CINE_MAX_CONFIG = {
+            FIREBASE_API_KEY: '${{ secrets.FIREBASE_API_KEY }}',
+            FIREBASE_PROJECT_ID: '${{ secrets.FIREBASE_PROJECT_ID }}',
+            FIREBASE_DATABASE_URL: '${{ secrets.FIREBASE_DATABASE_URL }}',
+            FIREBASE_STORAGE_BUCKET: '${{ secrets.FIREBASE_STORAGE_BUCKET }}',
+            FIREBASE_APP_ID: '${{ secrets.FIREBASE_APP_ID }}'
+          };" > config.js
+
+      - name: Deploy
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          folder: .
+          branch: gh-pages

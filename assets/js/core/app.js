@@ -2,7 +2,7 @@
  * CineMaxBR HYPER-PREMIUM Core Engine - Otimizado para GitHub Pages
  */
 import { subscribeToMedia, subscribeToOldMovies, verifyAccessCode, incrementViews } from '../services/firebase-service.js';
-import { WebPlayer } from '../components/web-player.js';
+import { WebPlayer } from '../player/player.js';
 
 // Cache e Estado Global
 let allMedia = [];
@@ -276,8 +276,9 @@ function renderGrid(container, items) {
     container.innerHTML = items.map((item, i) => `
         <div class="col-6 col-md-4 col-lg-2 mb-4 animate-fade-in" style="animation-delay: ${i * 0.05}s">
             <div class="media-card" onclick="openDetailsById('${item.id}')">
-                <div class="media-card-skeleton"></div>
-                <img src="${item.poster}" alt="${item.title}" loading="lazy" onload="this.previousElementSibling.style.display='none'">
+                <div class="media-card-skeleton skeleton"></div>
+                <img data-src="${item.poster}" alt="${item.title}" class="img-lazy"
+                     onload="this.previousElementSibling.style.display='none'; this.classList.add('img-loaded')">
                 <div class="media-card-info">
                     <h5 class="fw-bold text-truncate mb-1">${item.title}</h5>
                     <div class="d-flex justify-content-between align-items-center">
@@ -288,6 +289,40 @@ function renderGrid(container, items) {
             </div>
         </div>
     `).join('');
+
+    initLazyLoading();
+}
+
+/**
+ * Lazy Loading Engine com Intersection Observer
+ */
+function initLazyLoading() {
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                const img = entry.target;
+                if (img.dataset.src) {
+                    img.src = img.dataset.src;
+                    img.removeAttribute('data-src');
+                }
+                // Continua observando para lidar com carregamento/descarregamento se necessário,
+                // mas para performance simples, podemos parar de observar após carregar.
+                // No entanto, o usuário pediu "quando para de amostrar para de carregar".
+                // Tecnicamente a imagem já está no cache, mas podemos "limpar" o src para economizar memória
+                // em listas gigantes, embora não seja o padrão para imagens pequenas.
+            } else {
+                // Se quiser economizar banda real (parar de carregar se o usuário rolar rápido demais)
+                // O navegador já faz algum gerenciamento, mas podemos tentar:
+                const img = entry.target;
+                if (img.src && !img.classList.contains('img-loaded')) {
+                    // Se ainda não carregou e saiu da tela, cancelamos
+                    img.src = '';
+                }
+            }
+        });
+    }, { rootMargin: '100px' });
+
+    document.querySelectorAll('.img-lazy[data-src]').forEach(img => observer.observe(img));
 }
 
 window.openDetailsById = (id) => {

@@ -343,6 +343,29 @@ body {
     to { opacity: 0; transform: scale(1.1); }
 }
 
-.text-dim { color: rgba(255,255,255,0.5); }
-.fw-800 { font-weight: 800; }
-.extra-small { font-size: 0.65rem; }
+/* Media Card Skeleton Loading */
+.media-card-skeleton {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, #111 25%, #222 50%, #111 75%);
+    background-size: 200% 100%;
+    animation: skeleton-loading 1.5s infinite;
+    z-index: 1;
+}
+
+@keyframes skeleton-loading {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+/* Custom Scrollbar for Franchises */
+.custom-scrollbar::-webkit-scrollbar {
+    height: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+    background: rgba(255,255,255,0.05);
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+    background: var(--accent);
+    border-radius: 10px;
+}

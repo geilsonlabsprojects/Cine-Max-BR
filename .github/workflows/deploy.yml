@@ -15,10 +15,12 @@ jobs:
         run: |
           echo "window.CINE_MAX_CONFIG = {
             FIREBASE_API_KEY: '${{ secrets.FIREBASE_API_KEY }}',
+            FIREBASE_AUTH_DOMAIN: '${{ secrets.FIREBASE_PROJECT_ID }}.firebaseapp.com',
             FIREBASE_PROJECT_ID: '${{ secrets.FIREBASE_PROJECT_ID }}',
             FIREBASE_DATABASE_URL: '${{ secrets.FIREBASE_DATABASE_URL }}',
             FIREBASE_STORAGE_BUCKET: '${{ secrets.FIREBASE_STORAGE_BUCKET }}',
-            FIREBASE_APP_ID: '${{ secrets.FIREBASE_APP_ID }}'
+            FIREBASE_APP_ID: '${{ secrets.FIREBASE_APP_ID }}',
+            GEMINI_API_KEY: '${{ secrets.GEMINI_API_KEY }}'
           };" > config.js
 
       - name: Deploy

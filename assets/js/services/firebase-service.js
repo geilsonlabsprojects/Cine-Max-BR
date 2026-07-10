@@ -1,9 +1,5 @@
 /**
  * Firebase initialization and database services for Web Portal.
- *
- * SECURITY NOTE: In professional environments, use environment variables.
- * For this Web implementation, we use a global config that can be injected
- * during deployment (e.g., Vercel, Netlify) or locally via .env.
  */
 
 const firebaseConfig = {
@@ -16,8 +12,6 @@ const firebaseConfig = {
 
 if (!firebase.apps.length && firebaseConfig.apiKey) {
     firebase.initializeApp(firebaseConfig);
-} else if (!firebaseConfig.apiKey) {
-    console.warn("Firebase configuration not found. Please provide config.js");
 }
 
 export const db = firebase.database();
@@ -37,16 +31,6 @@ export function subscribeToMedia(callback) {
     });
 }
 
-export async function incrementViews(id, isOld = false) {
-    try {
-        const path = isOld ? `movies/${id}/views` : `media/${id}/views`;
-        const ref = db.ref(path);
-        await ref.transaction(current => (current || 0) + 1);
-    } catch (e) {
-        console.error("Error incrementing views:", e);
-    }
-}
-
 export function subscribeToOldMovies(callback) {
     db.ref('movies').on('value', snap => {
         const data = [];
@@ -57,6 +41,7 @@ export function subscribeToOldMovies(callback) {
     });
 }
 
+// Função única para contar visualizações
 export async function incrementViews(id, isOld = false) {
     try {
         const path = isOld ? `movies/${id}/views` : `media/${id}/views`;

@@ -1,60 +1,36 @@
 /**
- * UI and DOM manipulation helpers.
+ * DOM Manipulation Helpers for Web Portal.
  */
-import { normalizeUrl } from './url-helper.js';
 
-export function updateImagePreview(containerId, url) {
-    const container = document.getElementById(containerId);
-    if (url && (url.startsWith('http') || url.startsWith('https'))) {
-        container.innerHTML = `<img src="${url}" class="preview-img" onerror="this.parentElement.innerHTML='<div class=\'preview-placeholder\'>Erro ao carregar imagem</div>'">`;
-    } else {
-        container.innerHTML = `<div class="preview-placeholder">Sem imagem</div>`;
-    }
-}
+export function createMediaCard(item, onClick) {
+    const col = document.createElement('div');
+    col.className = 'col-6 col-md-4 col-lg-2 animate-fade-in';
 
-export function showVideoPreview(containerId, url) {
-    const previewBox = document.getElementById(containerId);
-    if (!url) {
-        alert("Insira uma URL primeiro!");
-        return;
-    }
-
-    const embedUrl = normalizeUrl(url);
-
-    previewBox.innerHTML = `
-        <div class="ratio ratio-16x9">
-            <iframe src="${embedUrl}" title="Video Preview" allowfullscreen style="border-radius:14px; border: 1px solid var(--border);"></iframe>
+    col.innerHTML = `
+        <div class="media-card" data-id="${item.id}">
+            <img src="${item.poster}" alt="${item.title}" loading="lazy">
+            <div class="media-info">
+                <p class="fw-bold mb-1 text-truncate">${item.title}</p>
+                <div class="d-flex justify-content-between align-items-center">
+                    <span class="badge bg-secondary extra-small" style="font-size: 0.6rem;">${item.year}</span>
+                    <span class="text-accent fw-bold" style="color: #E50914; font-size: 0.8rem;">★ ${item.rating || 'N/A'}</span>
+                </div>
+            </div>
         </div>
-        <button class="btn btn-sm btn-link text-danger w-100 mt-2" id="closePreviewBtn">Fechar Preview</button>
     `;
-    previewBox.style.display = 'block';
-    previewBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
 
-    document.getElementById('closePreviewBtn').onclick = () => {
-        previewBox.style.display = 'none';
-    };
+    col.querySelector('.media-card').onclick = () => onClick(item);
+    return col;
 }
 
-export function analyzeLinkType(url) {
-    if (!url) return null;
+export function renderPlayer(url, containerId) {
+    const container = document.getElementById(containerId);
+    container.innerHTML = '';
 
-    if (url.includes('google.com/drive') || url.includes('docs.google.com')) {
-        return { type: "Google Drive (Recomendado)", color: "#34A853" };
-    } else if (url.includes('youtube.com') || url.includes('youtu.be')) {
-        return { type: "YouTube (Limitado)", color: "#FF0000" };
-    } else if (url.endsWith('.mp4') || url.endsWith('.mkv') || url.endsWith('.m3u8')) {
-        return { type: "Link Direto (Premium)", color: "#3DDC84" };
+    if (url.includes('youtube.com') || url.includes('youtu.be')) {
+        const videoId = url.split('v=')[1] || url.split('/').pop();
+        container.innerHTML = `<iframe width="100%" height="100%" src="https://www.youtube.com/embed/${videoId}?autoplay=1" frameborder="0" allowfullscreen></iframe>`;
     } else {
-        return { type: "Iframe/Web (Compatibilidade)", color: "#94A3B8" };
+        container.innerHTML = `<iframe width="100%" height="100%" src="${url}" frameborder="0" allowfullscreen></iframe>`;
     }
-}
-
-export function showAnalysis(containerId, analysis) {
-    const resBox = document.getElementById(containerId);
-    if (!analysis) {
-        resBox.style.display = 'none';
-        return;
-    }
-    resBox.innerHTML = `Identificado como: <b style="color:${analysis.color}">${analysis.type}</b>`;
-    resBox.style.display = 'block';
 }

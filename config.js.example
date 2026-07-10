@@ -1,0 +1,11 @@
+/**
+ * CONFIGURATION TEMPLATE FOR WEB PORTAL
+ */
+
+window.CINE_MAX_CONFIG = {
+    FIREBASE_API_KEY: "SUA_API_KEY_AQUI",
+    FIREBASE_PROJECT_ID: "seu-projeto",
+    FIREBASE_DATABASE_URL: "https://seu-projeto-default-rtdb.firebaseio.com",
+    FIREBASE_STORAGE_BUCKET: "seu-projeto.firebasestorage.app",
+    FIREBASE_APP_ID: "1:123456789:web:abcdef"
+};

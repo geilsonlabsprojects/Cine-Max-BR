@@ -1,7 +1,7 @@
 /**
  * Video Player Controls Logic
  */
-export function initControls(video, container) {
+export function initControls(video, container, mediaItem) {
     const playPauseBtn = container.querySelector('#playPauseBtn');
     const progressBar = container.querySelector('#progressBar');
     const progressArea = container.querySelector('.progress-area');
@@ -12,7 +12,10 @@ export function initControls(video, container) {
     const fullscreenBtn = container.querySelector('#fullscreenBtn');
     const skipBackBtn = container.querySelector('#skipBackBtn');
     const skipForwardBtn = container.querySelector('#skipForwardBtn');
+    const pipBtn = container.querySelector('#pipBtn');
     const loadingOverlay = container.querySelector('#playerLoading');
+
+    let lastSaveTime = 0;
 
     // Play/Pause
     const togglePlay = () => {
@@ -33,6 +36,15 @@ export function initControls(video, container) {
         const percent = (video.currentTime / video.duration) * 100;
         progressBar.style.width = `${percent}%`;
         currentTimeEl.innerText = formatTime(video.currentTime);
+
+        // Throttle progress saving to every 5 seconds
+        const now = Date.now();
+        if (now - lastSaveTime > 5000) {
+            if (window.saveProgress) {
+                window.saveProgress(mediaItem, video.currentTime, video.duration);
+            }
+            lastSaveTime = now;
+        }
     };
 
     video.onloadedmetadata = () => {
@@ -66,6 +78,15 @@ export function initControls(video, container) {
             fullscreenBtn.innerHTML = '<i class="fas fa-expand"></i>';
         }
     };
+
+    // Mini Player (PiP)
+    if (pipBtn) {
+        pipBtn.onclick = () => {
+            if (window.toggleMiniPlayer) {
+                window.toggleMiniPlayer();
+            }
+        };
+    }
 
     // Loading State
     video.onwaiting = () => { if (loadingOverlay) loadingOverlay.style.display = 'flex'; };

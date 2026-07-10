@@ -69,72 +69,98 @@
         </div>
     </div>
 
-    <!-- Hyper Navbar -->
-    <nav class="navbar navbar-expand-lg navbar-dark navbar-pro fixed-top">
-        <div class="container-fluid px-5">
-            <a class="navbar-brand brand" href="#">
-                <i class="fas fa-play-circle"></i> CINEMAX<span>BR</span>
-            </a>
-            <div class="collapse navbar-collapse">
-                <ul class="navbar-nav mx-auto gap-4 fw-800 text-uppercase letter-spacing-1">
-                    <li class="nav-item"><a class="nav-link active" href="#">Início</a></li>
-                    <li class="nav-item"><a class="nav-link" href="#movies">Filmes</a></li>
-                    <li class="nav-item"><a class="nav-link" href="#series">Séries</a></li>
-                    <li class="nav-item"><a class="nav-link" href="#kids">Kids</a></li>
-                </ul>
-                <div class="d-flex align-items-center gap-4">
-                    <i class="fas fa-search cursor-pointer fs-5" id="btnOpenSearch"></i>
-                    <i class="fas fa-bell cursor-pointer fs-5"></i>
-                    <div class="avatar-circle"></div>
-                </div>
-            </div>
-        </div>
+    <!-- Sidebar -->
+    <nav class="sidebar-pro">
+        <a href="#" class="brand mb-5 px-3">
+            <i class="fas fa-play-circle"></i>
+        </a>
+        <a href="#" class="sidebar-item active" onclick="filterCategory('all')">
+            <i class="fas fa-home"></i>
+            <span>Início</span>
+        </a>
+        <a href="#" class="sidebar-item" onclick="filterCategory('movie')">
+            <i class="fas fa-film"></i>
+            <span>Filmes</span>
+        </a>
+        <a href="#" class="sidebar-item" onclick="filterCategory('series')">
+            <i class="fas fa-tv"></i>
+            <span>Séries</span>
+        </a>
+        <a href="#" class="sidebar-item" onclick="showMyList()">
+            <i class="fas fa-heart"></i>
+            <span>Minha Lista</span>
+        </a>
+        <div class="mt-auto"></div>
+        <a href="#" class="sidebar-item" onclick="firebase.auth().signOut()">
+            <i class="fas fa-sign-out-alt"></i>
+            <span>Sair</span>
+        </a>
     </nav>
 
-    <!-- Hyper Hero -->
-    <header class="hero" id="hero">
-        <div class="hero-bg-container">
-            <img src="" id="heroBanner" class="hero-bg">
+    <main style="margin-left: 80px;">
+        <!-- Hyper Navbar -->
+        <nav class="navbar navbar-expand-lg navbar-dark navbar-pro fixed-top" style="left: 80px;">
+            <div class="container-fluid px-5">
+                <div class="d-flex align-items-center gap-4 w-100">
+                    <div class="d-flex gap-2 overflow-auto no-scrollbar py-2" id="categoryBar">
+                        <button class="category-pill active" onclick="filterCategory('all')">Tudo</button>
+                        <button class="category-pill" onclick="filterCategory('Ação')">Ação</button>
+                        <button class="category-pill" onclick="filterCategory('Terror')">Terror</button>
+                        <button class="category-pill" onclick="filterCategory('Ficção')">Ficção</button>
+                    </div>
+
+                    <div class="ms-auto d-flex align-items-center gap-4">
+                        <i class="fas fa-search cursor-pointer fs-5" id="btnOpenSearch"></i>
+                        <div class="avatar-circle"></div>
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Hyper Hero -->
+        <header class="hero" id="hero">
+            <div class="hero-bg-container">
+                <img src="" id="heroBanner" class="hero-bg">
+            </div>
+            <div class="hero-overlay"></div>
+            <div class="hero-content">
+                <h1 class="hero-title" id="heroTitle">Carregando...</h1>
+                <p class="hero-desc" id="heroDesc">Experiência Ultra Evolution. O melhor do cinema mundial em qualidade premium exclusiva.</p>
+                <div class="d-flex gap-4">
+                    <button class="btn-hyper" id="btnPlayHero">
+                        <i class="fas fa-play"></i> ASSISTIR AGORA
+                    </button>
+                    <button class="btn-hyper" style="background: rgba(255,255,255,0.15); box-shadow: none;" id="btnInfoHero">
+                        <i class="fas fa-info-circle"></i> MAIS DETALHES
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Catalog Sections -->
+        <div class="container-fluid px-5 pb-5 mt-5">
+            <div id="continueWatchingSection" class="mb-5" style="display: none;">
+                <h2 class="section-title"><i class="fas fa-history text-accent"></i> Continue Assistindo</h2>
+                <div class="row g-4" id="continueWatchingGrid"></div>
+            </div>
+
+            <div id="franchiseSection"></div>
+
+            <section id="movies" class="mb-5">
+                <h2 class="section-title">Últimos Lançamentos</h2>
+                <div class="row g-4" id="moviesGrid"></div>
+            </section>
+
+            <section id="series" class="mb-5">
+                <h2 class="section-title">Séries em Alta</h2>
+                <div class="row g-4" id="seriesGrid"></div>
+            </section>
+
+            <section id="kids" class="mb-5">
+                <h2 class="section-title">Para Toda a Família</h2>
+                <div class="row g-4" id="kidsGrid"></div>
+            </section>
         </div>
-        <div class="hero-overlay"></div>
-        <div class="hero-content">
-            <h1 class="hero-title" id="heroTitle">Carregando...</h1>
-            <p class="hero-desc" id="heroDesc">Experiência Ultra Evolution. O melhor do cinema mundial em qualidade premium exclusiva.</p>
-            <div class="d-flex gap-4">
-                <button class="btn-hyper" id="btnPlayHero">
-                    <i class="fas fa-play"></i> ASSISTIR AGORA
-                </button>
-                <button class="btn-hyper" style="background: rgba(255,255,255,0.15); box-shadow: none;" id="btnInfoHero">
-                    <i class="fas fa-info-circle"></i> MAIS DETALHES
-                </button>
-            </div>
-        </div>
-    </header>
-
-    <!-- Catalog Sections -->
-    <main class="container-fluid px-5 pb-5 mt-5">
-        <div id="franchiseSection"></div>
-
-        <section id="movies" class="mb-5">
-            <h2 class="section-title">Últimos Lançamentos</h2>
-            <div class="row g-4" id="moviesGrid">
-                <!-- Dynamic Content -->
-            </div>
-        </section>
-
-        <section id="series" class="mb-5">
-            <h2 class="section-title">Séries em Alta</h2>
-            <div class="row g-4" id="seriesGrid">
-                <!-- Dynamic Content -->
-            </div>
-        </section>
-
-        <section id="kids" class="mb-5">
-            <h2 class="section-title">Para Toda a Família</h2>
-            <div class="row g-4" id="kidsGrid">
-                <!-- Dynamic Content -->
-            </div>
-        </section>
     </main>
 
     <!-- Search Overlay -->

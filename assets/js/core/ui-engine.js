@@ -23,57 +23,100 @@ class UIEngine {
     renderDashboard(state) {
         if (state.isLoading) return;
 
-        // 1. Update Hero (only if needed)
-        this.updateHero(state.allMedia);
+        // 1. Update Hero (with safety try-catch)
+        try {
+            this.updateHero(state.allMedia);
+        } catch (e) {
+            console.error("Hero Update Error:", e);
+        }
 
-        // 2. Render Main Grid based on current filter
+        // 2. Render Main Grid (Generic Catalog)
         const mainGrid = document.getElementById('mainContentGrid');
         if (mainGrid) {
             const filtered = dataEngine.getFilteredMedia(this.currentFilter);
             this.renderGrid(mainGrid, filtered);
         }
 
-        // 3. Render Specific Sections (Home Page)
-        const homeSections = {
-            movies: document.getElementById('moviesGrid'),
-            series: document.getElementById('seriesGrid'),
-            kids: document.getElementById('kidsGrid'),
-            history: document.getElementById('continueWatchingGrid'),
-            favorites: document.getElementById('watchlistGrid')
-        };
+        // 3. Render Specific Home Sections
+        const homeSections = [
+            { id: 'moviesGrid', items: state.allMedia.filter(m => m.type === 'movie').slice(0, 12) },
+            { id: 'seriesGrid', items: state.allMedia.filter(m => m.type === 'series').slice(0, 12) },
+            { id: 'kidsGrid', items: state.allMedia.filter(m => dataEngine.isKids(m)).slice(0, 12) },
+            { id: 'latestGrid', items: state.allMedia.slice(0, 12) }
+        ];
 
-        if (homeSections.movies) this.renderGrid(homeSections.movies, state.allMedia.filter(m => m.type === 'movie').slice(0, 12));
-        if (homeSections.series) this.renderGrid(homeSections.series, state.allMedia.filter(m => m.type === 'series').slice(0, 12));
-        if (homeSections.kids) this.renderGrid(homeSections.kids, state.allMedia.filter(m => dataEngine.isKids(m)).slice(0, 12));
+        // Apply filters if we are in Home but category is selected
+        if (this.currentFilter !== 'all') {
+            const filteredAll = dataEngine.getFilteredMedia(this.currentFilter);
+            homeSections.forEach(sec => {
+                sec.items = filteredAll.filter(m => {
+                    if (sec.id === 'moviesGrid') return m.type === 'movie';
+                    if (sec.id === 'seriesGrid') return m.type === 'series';
+                    if (sec.id === 'kidsGrid') return dataEngine.isKids(m);
+                    return true;
+                }).slice(0, 12);
+            });
+        }
 
-        if (homeSections.history) {
-            const section = document.getElementById('continueWatchingSection');
-            if (state.history.length > 0) {
-                section.style.display = 'block';
-                this.renderHistoryGrid(homeSections.history, state.history);
+        homeSections.forEach(sec => {
+            const container = document.getElementById(sec.id);
+            if (container) this.renderGrid(container, sec.items);
+        });
+
+        // History Section with toggle
+        const historyContainer = document.getElementById('continueWatchingGrid');
+        const historySection = document.getElementById('continueWatchingSection');
+        if (historySection) {
+            if (state.history && state.history.length > 0) {
+                historySection.style.display = 'block';
+                if (historyContainer) this.renderGrid(historyContainer, state.history, true);
             } else {
-                section.style.display = 'none';
+                historySection.style.display = 'none';
             }
         }
 
-        if (homeSections.favorites) {
-            const section = document.getElementById('watchlistSection');
+        // Watchlist Section with toggle
+        const watchlistContainer = document.getElementById('watchlistGrid');
+        const watchlistSection = document.getElementById('watchlistSection');
+        if (watchlistSection) {
             const favItems = state.allMedia.filter(m => state.favorites.has(m.id));
             if (favItems.length > 0) {
-                section.style.display = 'block';
-                this.renderGrid(homeSections.favorites, favItems);
+                watchlistSection.style.display = 'block';
+                if (watchlistContainer) this.renderGrid(watchlistContainer, favItems);
             } else {
-                section.style.display = 'none';
+                watchlistSection.style.display = 'none';
             }
         }
 
         this.initLazyLoading();
     }
 
-    renderGrid(container, items) {
+    renderGrid(container, items, isHistory = false) {
         if (!container) return;
+        if (items.length === 0 && !isHistory) {
+            // Only show empty state if it's not a secondary section
+            return;
+        }
 
-        container.innerHTML = items.map((item, i) => this.createCardHTML(item, i)).join('');
+        container.innerHTML = items.map((item, i) =>
+            isHistory ? this.createHistoryCardHTML(item) : this.createCardHTML(item, i)
+        ).join('');
+    }
+
+    createHistoryCardHTML(item) {
+        return `
+            <div class="col-6 col-md-4 col-lg-2 mb-4 animate-fade-in">
+                <div class="media-card" onclick="window.startPlayback('${item.id}')">
+                    <img src="${item.poster}" loading="lazy">
+                    <div class="media-card-info">
+                        <div class="progress mb-2" style="height: 4px; background: rgba(255,255,255,0.2);">
+                            <div class="progress-bar bg-danger" style="width: ${item.progress}%"></div>
+                        </div>
+                        <h6 class="mb-0 text-truncate small fw-bold">${item.title}</h6>
+                    </div>
+                </div>
+            </div>
+        `;
     }
 
     renderHistoryGrid(container, items) {
@@ -118,24 +161,33 @@ class UIEngine {
         if (!hero) return;
 
         const featured = media.find(m => m.featured) || media[0];
-        if (!featured) return;
+        if (!featured) {
+            hero.style.display = 'none';
+            return;
+        }
+        hero.style.display = 'flex';
 
         const heroBg = document.getElementById('heroBanner');
         const heroTitle = document.getElementById('heroTitle');
         const heroDesc = document.getElementById('heroDesc');
 
-        if (heroBg.src.includes(featured.banner || featured.poster)) return;
+        if (!heroBg || !heroTitle || !heroDesc) return;
+
+        // Fix image source
+        const bannerUrl = featured.banner || featured.poster;
+        if (heroBg.src && heroBg.src.includes(bannerUrl)) return;
 
         hero.classList.remove('active');
-        setTimeout(() => {
-            heroBg.src = featured.banner || featured.poster;
-            heroTitle.innerText = featured.title;
-            heroDesc.innerText = featured.desc;
 
-            document.getElementById('btnPlayHero').onclick = () => this.openDetails(featured);
-            document.getElementById('btnInfoHero').onclick = () => this.openDetails(featured);
-            hero.classList.add('active');
-        }, 400);
+        // Immediate update to avoid blank state
+        heroBg.src = bannerUrl;
+        heroTitle.innerText = featured.title;
+        heroDesc.innerText = featured.desc;
+
+        document.getElementById('btnPlayHero').onclick = () => window.startPlayback(featured.id);
+        document.getElementById('btnInfoHero').onclick = () => this.openDetails(featured);
+
+        setTimeout(() => hero.classList.add('active'), 100);
     }
 
     openDetails(item) {

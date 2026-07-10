@@ -102,11 +102,13 @@
         <nav class="navbar navbar-expand-lg navbar-dark navbar-pro fixed-top" style="left: 80px;">
             <div class="container-fluid px-5">
                 <div class="d-flex align-items-center gap-4 w-100">
-                    <div class="d-flex gap-2 overflow-auto no-scrollbar py-2" id="categoryBar">
+                    <div class="d-flex gap-2 overflow-auto no-scrollbar py-2" id="categoryBar" style="scroll-behavior: smooth;">
                         <button class="category-pill active" onclick="filterCategory('all')">Tudo</button>
                         <button class="category-pill" onclick="filterCategory('Ação')">Ação</button>
                         <button class="category-pill" onclick="filterCategory('Terror')">Terror</button>
-                        <button class="category-pill" onclick="filterCategory('Ficção')">Ficção</button>
+                        <button class="category-pill" onclick="filterCategory('Comédia')">Comédia</button>
+                        <button class="category-pill" onclick="filterCategory('Anime')">Anime</button>
+                        <button class="category-pill" onclick="filterCategory('Nostalgia')">Nostalgia</button>
                     </div>
 
                     <div class="ms-auto d-flex align-items-center gap-4">
@@ -147,17 +149,17 @@
             <div id="franchiseSection"></div>
 
             <section id="movies" class="mb-5">
-                <h2 class="section-title">Últimos Lançamentos</h2>
+                <h2 class="section-title"><i class="fas fa-fire text-danger"></i> Últimos Lançamentos</h2>
                 <div class="row g-4" id="moviesGrid"></div>
             </section>
 
             <section id="series" class="mb-5">
-                <h2 class="section-title">Séries em Alta</h2>
+                <h2 class="section-title"><i class="fas fa-tv text-danger"></i> Séries & Originais</h2>
                 <div class="row g-4" id="seriesGrid"></div>
             </section>
 
             <section id="kids" class="mb-5">
-                <h2 class="section-title">Para Toda a Família</h2>
+                <h2 class="section-title"><i class="fas fa-child text-info"></i> Para Toda a Família</h2>
                 <div class="row g-4" id="kidsGrid"></div>
             </section>
         </div>

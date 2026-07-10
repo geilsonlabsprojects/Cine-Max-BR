@@ -60,6 +60,23 @@ window.filterCategory = (category) => {
     currentFilter = category;
     document.querySelectorAll('.category-pill, .sidebar-item').forEach(el => el.classList.remove('active'));
 
+    // Reset visibility if coming from favorites
+    const seriesSection = document.getElementById('seriesGrid')?.parentElement;
+    const kidsSection = document.getElementById('kidsGrid')?.parentElement;
+    const franchiseSection = document.getElementById('franchiseSection');
+    const continueSection = document.getElementById('continueWatchingSection');
+
+    if (seriesSection) seriesSection.style.display = 'block';
+    if (kidsSection) kidsSection.style.display = 'block';
+    if (franchiseSection) franchiseSection.style.display = 'block';
+    if (continueSection) {
+        const history = JSON.parse(localStorage.getItem(`cinemax_history_${currentUser?.uid}`) || '[]');
+        if (history.length > 0) continueSection.style.display = 'block';
+    }
+
+    const moviesTitle = document.getElementById('moviesGrid')?.parentElement.querySelector('.section-title');
+    if (moviesTitle) moviesTitle.innerText = "Últimos Lançamentos";
+
     // Update UI
     const pills = document.querySelectorAll(`.category-pill`);
     pills.forEach(p => {
@@ -95,7 +112,8 @@ function renderAllSections() {
     renderGrid(seriesGrid, filtered.filter(m => m.type === 'series'));
     renderGrid(kidsGrid, filtered.filter(m => m.genre === 'Kids'));
 
-    renderFranchises(filtered);
+    // renderFranchises is not defined in web-portal/app.js, using renderFranchiseGroupsUI
+    renderFranchiseGroupsUI(document.getElementById('franchiseSection'), filtered);
     renderContinueWatching();
 }
 
@@ -288,7 +306,6 @@ function renderHyperUI() {
     };
 
     updateHero();
-    processFranchiseGroups();
 
     if (sections.movies) renderGrid(sections.movies, allMedia.filter(m => (m.type === 'movie' || m.isOld) && !isKids(m)));
     if (sections.series) renderGrid(sections.series, allMedia.filter(m => m.type === 'series' && !m.isOld && !isKids(m)));
@@ -321,24 +338,27 @@ function updateHero() {
     }
 }
 
-function processFranchiseGroups() {
-    groupedFranchises = {};
-    allMedia.forEach(item => {
+function renderFranchiseGroupsUI(container, filteredItems = null) {
+    const itemsToProcess = filteredItems || allMedia;
+    const groups = {};
+
+    itemsToProcess.forEach(item => {
         const fId = item.franchiseId;
-        if (fId && allFranchises[fId]) { // Somente se a franquia existir
+        if (fId && allFranchises[fId]) {
             const fName = allFranchises[fId].name;
-            if (!groupedFranchises[fName]) groupedFranchises[fName] = [];
-            groupedFranchises[fName].push(item);
+            if (!groups[fName]) groups[fName] = [];
+            groups[fName].push(item);
         }
     });
-}
 
-function renderFranchiseGroupsUI(container) {
-    const names = Object.keys(groupedFranchises);
-    if (names.length === 0) return;
+    const names = Object.keys(groups);
+    if (names.length === 0 || !container) {
+        if (container) container.innerHTML = '';
+        return;
+    }
 
     container.innerHTML = names.map(name => {
-        const items = groupedFranchises[name].sort((a, b) => (a.year || 0) - (b.year || 0));
+        const items = groups[name].sort((a, b) => (a.year || 0) - (b.year || 0));
         return `
             <section class="mb-5 animate-fade-in collection-row">
                 <h2 class="section-title">Coleção: ${name}</h2>
@@ -362,21 +382,21 @@ function renderFranchiseGroupsUI(container) {
 function renderGrid(container, items) {
     if (!container) return;
     if (items.length === 0) {
-        container.innerHTML = '<div class="col-12 text-center py-5"><p class="text-dim">Nenhum conteúdo nesta categoria.</p></div>';
+        container.innerHTML = '<div class="col-12 text-center py-5"><p class="text-dim">Nenhum conteúdo encontrado.</p></div>';
         return;
     }
 
     container.innerHTML = items.map((item, i) => `
-        <div class="col-6 col-md-4 col-lg-2 mb-4 animate-fade-in" style="animation-delay: ${i * 0.05}s">
-            <div class="media-card" onclick="openDetailsById('${item.id}')">
+        <div class="col-6 col-md-4 col-lg-2 mb-5 animate-fade-in" style="animation-delay: ${i * 0.03}s">
+            <div class="media-card h-100" onclick="openDetailsById('${item.id}')">
                 <div class="media-card-skeleton skeleton"></div>
                 <img data-src="${item.poster}" alt="${item.title}" class="img-lazy"
                      onload="this.previousElementSibling.style.display='none'; this.classList.add('img-loaded')">
                 <div class="media-card-info">
-                    <h5 class="fw-bold text-truncate mb-1">${item.title}</h5>
-                    <div class="d-flex justify-content-between align-items-center">
-                        <span class="badge border border-secondary extra-small">${item.year}</span>
-                        <span class="text-accent fw-bold small"><i class="fas fa-star text-warning me-1"></i>${item.rating || '8.5'}</span>
+                    <h6 class="fw-bold text-truncate mb-1">${item.title}</h6>
+                    <div class="d-flex justify-content-between align-items-center opacity-75">
+                        <span class="extra-small">${item.year}</span>
+                        <span class="small"><i class="fas fa-star text-warning me-1"></i>${item.rating || '8.5'}</span>
                     </div>
                 </div>
             </div>
@@ -591,6 +611,32 @@ function initDraggable(el) {
         document.onmousemove = null;
     }
 }
+
+window.showMyList = () => {
+    currentFilter = 'favorites';
+    document.querySelectorAll('.sidebar-item').forEach(el => el.classList.remove('active'));
+    const favItem = document.querySelector('.sidebar-item i.fa-heart')?.parentElement;
+    if (favItem) favItem.classList.add('active');
+
+    const moviesGrid = document.getElementById('moviesGrid');
+    const seriesGrid = document.getElementById('seriesGrid');
+    const kidsGrid = document.getElementById('kidsGrid');
+    const franchiseSection = document.getElementById('franchiseSection');
+    const continueSection = document.getElementById('continueWatchingSection');
+
+    if (franchiseSection) franchiseSection.style.display = 'none';
+    if (continueSection) continueSection.style.display = 'none';
+
+    const favs = JSON.parse(localStorage.getItem('cinemax_favorites') || '[]');
+    const filtered = allMedia.filter(m => favs.includes(m.id));
+
+    if (moviesGrid) {
+        moviesGrid.parentElement.querySelector('.section-title').innerText = "Meus Favoritos";
+        renderGrid(moviesGrid, filtered);
+    }
+    if (seriesGrid) seriesGrid.parentElement.style.display = 'none';
+    if (kidsGrid) kidsGrid.parentElement.style.display = 'none';
+};
 
 // Favoritos e Watchlist
 window.isFavorite = (id) => JSON.parse(localStorage.getItem('cinemax_favorites') || '[]').includes(id);

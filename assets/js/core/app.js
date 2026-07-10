@@ -314,31 +314,47 @@ window.openDetails = function(item) {
     const isSeries = item.type === 'series';
 
     modalBody.innerHTML = `
-        <div class="row g-0">
-            <div class="col-md-4">
-                <img src="${item.poster}" class="w-100 h-100" style="object-fit: cover; min-height: 500px;">
+        <div class="media-detail-backdrop" style="background-image: url('${item.banner || item.poster}')"></div>
+        <div class="row g-0 position-relative" style="z-index: 2;">
+            <div class="col-md-4 d-none d-md-block">
+                <div class="poster-glow-container">
+                    <img src="${item.poster}" class="poster-main shadow-lg">
+                </div>
             </div>
-            <div class="col-md-8 p-4 p-md-5 d-flex flex-column" style="background: #111;">
-                <div class="d-flex justify-content-end mb-3">
+            <div class="col-md-8 p-4 p-md-5 d-flex flex-column content-glass">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <span class="badge bg-danger rounded-pill px-3 py-2 fw-bold">${item.type === 'series' ? 'SÉRIE' : 'FILME'}</span>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
 
-                <h1 class="display-4 fw-900 mb-2">${item.title}</h1>
+                <h1 class="display-3 fw-900 mb-2 cinematic-title">${item.title}</h1>
 
-                <div class="d-flex gap-3 mb-4 fw-700 text-secondary">
-                    <span class="text-warning">★ ${item.rating || 'N/A'}</span>
-                    <span>${item.year}</span>
-                    <span>${item.genre}</span>
+                <div class="d-flex flex-wrap gap-3 mb-4 fw-700">
+                    <span class="text-warning"><i class="fas fa-star me-2"></i>${item.rating || 'N/A'}</span>
+                    <span class="text-white-50"><i class="far fa-calendar-alt me-2"></i>${item.year}</span>
+                    <span class="text-white-50"><i class="fas fa-film me-2"></i>${item.genre || 'Aventura'}</span>
                 </div>
 
-                <p class="lead mb-4" style="font-size: 1.1rem; line-height: 1.6; color: #ccc;">${item.desc}</p>
+                <p class="lead mb-4 description-text">${item.desc}</p>
 
                 ${renderFranchiseSuggest(item)}
 
-                <div class="d-flex gap-3 mb-4">
-                    <button class="btn btn-danger btn-lg px-5 py-3 fw-800 rounded-3" onclick="startPlayback('${item.id}')">
-                        <i class="fas fa-play me-2"></i> ASSISTIR
+                <div class="d-flex flex-wrap gap-3 mb-4 mt-auto">
+                    <button class="btn btn-danger btn-lg px-5 py-3 fw-900 rounded-pill action-btn pulse-glow" onclick="startPlayback('${item.id}')">
+                        <i class="fas fa-play me-2"></i> ASSISTIR AGORA
                     </button>
+                    ${item.trailer ? `
+                    <button class="btn btn-outline-light btn-lg px-4 py-3 fw-800 rounded-pill action-btn" onclick="openTrailer('${item.trailer}')">
+                        <i class="fas fa-film me-2"></i> TRAILER
+                    </button>` : ''}
+                </div>
+            </div>
+        </div>
+    `;
+
+    const detailsModal = new bootstrap.Modal(document.getElementById('detailsModal'));
+    detailsModal.show();
+};
                     <button class="btn btn-secondary btn-lg px-4 py-3 fw-800 rounded-3">
                         <i class="fas fa-plus"></i>
                     </button>
@@ -384,6 +400,10 @@ window.startPlayback = function(id) {
 }
 
 function openPlayer(item, url) {
+    if (!url) {
+        showToast("Este conteúdo ainda não possui um link de vídeo disponível.", "warning");
+        return;
+    }
     document.getElementById('playerOverlay').style.display = 'block';
     player.render(item, url);
 }

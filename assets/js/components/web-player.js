@@ -72,6 +72,14 @@ export class WebPlayer {
     }
 
     createVideoElement(url) {
+        if (!url) {
+            console.error("ERRO: URL de vídeo não fornecida.");
+            return `<div class="player-error d-flex flex-column align-items-center justify-content-center h-100 text-white">
+                <i class="fas fa-exclamation-triangle fa-3x mb-3 text-danger"></i>
+                <p>O link do vídeo não está disponível para este conteúdo.</p>
+            </div>`;
+        }
+
         const isYouTube = url.includes('youtube.com') || url.includes('youtu.be');
         if (isYouTube) {
             const videoId = url.split('v=')[1]?.split('&')[0] || url.split('/').pop();

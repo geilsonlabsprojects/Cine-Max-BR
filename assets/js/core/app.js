@@ -100,6 +100,25 @@ function setupGateEvents(gate) {
 function startApp() {
     initDataFlow();
     initSearch();
+    initLogout(); // Adiciona função de logout
+}
+
+/**
+ * Função para limpar acesso e pedir senha novamente
+ */
+function initLogout() {
+    const avatar = document.querySelector('.avatar-circle');
+    if (avatar) {
+        avatar.style.cursor = 'pointer';
+        avatar.title = 'Clique para Sair';
+        avatar.onclick = () => {
+            if (confirm("Deseja sair e bloquear o acesso com senha novamente?")) {
+                localStorage.removeItem('cinemax_access_granted');
+                localStorage.removeItem('cinemax_terms_accepted');
+                window.location.reload();
+            }
+        };
+    }
 }
 
 /**

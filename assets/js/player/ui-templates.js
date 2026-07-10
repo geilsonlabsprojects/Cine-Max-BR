@@ -11,10 +11,10 @@ export const playerTemplate = `
         </div>
 
         <!-- Loading Overlay -->
-        <div id="playerLoading" class="player-overlay" style="display: flex;">
-            <div class="spinner-border text-accent" role="status" style="width: 3rem; height: 3rem;">
-                <span class="visually-hidden">Loading...</span>
-            </div>
+        <div id="playerLoading" class="player-overlay" style="display: flex; flex-direction: column; gap: 1rem;">
+            <div class="spinner-border text-danger" role="status" style="width: 4rem; height: 4rem; border-width: 0.3em;"></div>
+            <div class="loader-text text-white fw-bold" style="letter-spacing: 2px;">PREPARANDO TUDO PARA VOCÊ...</div>
+            <div class="text-white-50 small">Otimizando a qualidade para sua conexão</div>
         </div>
 
         <!-- Custom Controls -->

@@ -117,10 +117,19 @@ export function initControls(video, container, mediaItem) {
         const levels = e.detail;
         if (!qualityLevels) return;
 
-        let html = `<div class="quality-item active" data-level="-1">Automático</div>`;
+        const currentSaved = localStorage.getItem('cinemax_player_quality') || -1;
+
+        let html = `<div class="quality-item ${currentSaved == -1 ? 'active' : ''}" data-level="-1">
+                        <span>Automático</span>
+                    </div>`;
+
         levels.forEach((level, index) => {
             const label = level.height ? `${level.height}p` : `Nível ${index}`;
-            html += `<div class="quality-item" data-level="${index}">${label}</div>`;
+            const isActive = currentSaved == index;
+            html += `<div class="quality-item ${isActive ? 'active' : ''}" data-level="${index}">
+                        <span>${label}</span>
+                        ${level.bitrate ? `<small class="opacity-50 ms-2">${(level.bitrate/1000000).toFixed(1)} Mbps</small>` : ''}
+                    </div>`;
         });
         qualityLevels.innerHTML = html;
 

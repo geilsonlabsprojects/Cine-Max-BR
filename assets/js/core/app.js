@@ -88,16 +88,54 @@ class App {
             }
         };
 
+        // Navigation (SPA Style)
+        window.navigateTo = (view) => {
+            const mainContent = document.getElementById('mainContent');
+            const homeContent = document.getElementById('homeContent');
+            const sectionTitle = document.getElementById('viewSectionTitle');
+
+            if (!mainContent || !homeContent) return;
+
+            // Reset Search
+            if (window.closeSearch) window.closeSearch();
+
+            if (view === 'home') {
+                homeContent.style.display = 'block';
+                mainContent.style.display = 'none';
+                uiEngine.renderDashboard(dataEngine.state);
+            } else {
+                homeContent.style.display = 'none';
+                mainContent.style.display = 'block';
+
+                uiEngine.currentFilter = view;
+                if (sectionTitle) {
+                    const titles = { 'movie': 'Filmes', 'series': 'Séries', 'favorites': 'Minha Lista' };
+                    sectionTitle.innerText = titles[view] || 'Catálogo';
+                }
+
+                uiEngine.renderDashboard(dataEngine.state);
+            }
+
+            // Update Sidebar UI
+            document.querySelectorAll('.sidebar-item').forEach(item => {
+                const onclickAttr = item.getAttribute('onclick') || '';
+                const isMatch = onclickAttr.includes(`'${view}'`);
+                item.classList.toggle('active', isMatch);
+            });
+
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        };
+
         // Category Filtering
         window.filterCategory = (category) => {
             uiEngine.currentFilter = category;
 
-            // Update UI State for Category Pills
             document.querySelectorAll('.category-pill').forEach(btn => {
-                btn.classList.toggle('active', btn.innerText.toLowerCase() === category.toLowerCase());
+                const btnText = btn.innerText.toLowerCase().trim();
+                const targetText = (category === 'all' ? 'tudo' : category).toLowerCase().trim();
+                btn.classList.toggle('active', btnText === targetText);
             });
 
-            // Re-trigger render through data update or direct call
             uiEngine.renderDashboard(dataEngine.state);
         };
     }

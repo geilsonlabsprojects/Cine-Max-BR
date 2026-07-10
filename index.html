@@ -40,19 +40,19 @@
         <div class="brand mb-5 px-3">
             <img src="https://i.ibb.co/N66TBBsH/Gemini-Generated-Image-1gdcqn1gdcqn1gdc-removebg-preview.png" class="brand-img" alt="CineMaxBR">
         </div>
-        <a href="#" class="sidebar-item active" id="navHome">
+        <a href="javascript:void(0)" class="sidebar-item active" onclick="window.navigateTo('home')">
             <i class="fas fa-home"></i>
             <span>Início</span>
         </a>
-        <a href="catalog.html?type=movie" class="sidebar-item">
+        <a href="javascript:void(0)" class="sidebar-item" onclick="window.navigateTo('movie')">
             <i class="fas fa-film"></i>
             <span>Filmes</span>
         </a>
-        <a href="catalog.html?type=series" class="sidebar-item">
+        <a href="javascript:void(0)" class="sidebar-item" onclick="window.navigateTo('series')">
             <i class="fas fa-tv"></i>
             <span>Séries</span>
         </a>
-        <a href="catalog.html?type=favorites" class="sidebar-item">
+        <a href="javascript:void(0)" class="sidebar-item" onclick="window.navigateTo('favorites')">
             <i class="fas fa-heart"></i>
             <span>Minha Lista</span>
         </a>
@@ -63,12 +63,13 @@
         </a>
     </nav>
 
-    <main style="margin-left: 80px;">
+    <!-- Main Content Area -->
+    <main class="content-wrapper" style="margin-left: 80px;">
         <!-- Hyper Navbar -->
         <nav class="navbar navbar-expand-lg navbar-dark navbar-pro fixed-top" style="left: 80px;">
             <div class="container-fluid px-5">
                 <div class="d-flex align-items-center gap-4 w-100">
-                    <div class="d-flex gap-2 overflow-auto no-scrollbar py-2" id="categoryBar" style="scroll-behavior: smooth;">
+                    <div class="d-flex gap-2 overflow-auto no-scrollbar py-2" id="mainCategoryBar" style="scroll-behavior: smooth;">
                         <button class="category-pill active" onclick="filterCategory('all')">Tudo</button>
                         <button class="category-pill" onclick="filterCategory('Ação')">Ação</button>
                         <button class="category-pill" onclick="filterCategory('Terror')">Terror</button>
@@ -85,49 +86,70 @@
             </div>
         </nav>
 
-        <!-- Hyper Hero -->
-        <header class="hero" id="hero">
-            <div class="hero-bg-container">
-                <img src="" id="heroBanner" class="hero-bg">
-            </div>
-            <div class="hero-overlay"></div>
-            <div class="hero-content">
-                <h1 class="hero-title" id="heroTitle">Carregando...</h1>
-                <p class="hero-desc" id="heroDesc">Experiência Ultra Evolution. O melhor do cinema mundial em qualidade premium exclusiva.</p>
-                <div class="d-flex gap-4">
-                    <button class="btn-hyper" id="btnPlayHero">
-                        <i class="fas fa-play"></i> ASSISTIR AGORA
-                    </button>
-                    <button class="btn-hyper" style="background: rgba(255,255,255,0.15); box-shadow: none;" id="btnInfoHero">
-                        <i class="fas fa-info-circle"></i> MAIS DETALHES
-                    </button>
+        <!-- View 1: Home Dashboard -->
+        <div id="homeContent">
+            <!-- Hyper Hero -->
+            <header class="hero" id="hero">
+                <div class="hero-bg-container">
+                    <img src="" id="heroBanner" class="hero-bg">
                 </div>
+                <div class="hero-overlay"></div>
+                <div class="hero-content">
+                    <h1 class="hero-title" id="heroTitle">Carregando...</h1>
+                    <p class="hero-desc" id="heroDesc">Experiência Ultra Evolution. O melhor do cinema mundial em qualidade premium exclusiva.</p>
+                    <div class="d-flex gap-4">
+                        <button class="btn-hyper" id="btnPlayHero">
+                            <i class="fas fa-play"></i> ASSISTIR AGORA
+                        </button>
+                        <button class="btn-hyper" style="background: rgba(255,255,255,0.15); box-shadow: none;" id="btnInfoHero">
+                            <i class="fas fa-info-circle"></i> MAIS DETALHES
+                        </button>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Catalog Sections -->
+            <div class="container-fluid px-5 pb-5 mt-5">
+                <div id="continueWatchingSection" class="mb-5" style="display: none;">
+                    <h2 class="section-title"><i class="fas fa-history text-accent"></i> Continue Assistindo</h2>
+                    <div class="row g-4" id="continueWatchingGrid"></div>
+                </div>
+
+                <div id="latestSection" class="mb-5">
+                    <h2 class="section-title"><i class="fas fa-fire text-danger"></i> Últimos Lançamentos</h2>
+                    <div class="row g-4" id="latestGrid"></div>
+                </div>
+
+                <section id="movies" class="mb-5">
+                    <h2 class="section-title"><i class="fas fa-film text-danger"></i> Filmes Populares</h2>
+                    <div class="row g-4" id="moviesGrid"></div>
+                </section>
+
+                <section id="series" class="mb-5">
+                    <h2 class="section-title"><i class="fas fa-tv text-danger"></i> Séries & Originais</h2>
+                    <div class="row g-4" id="seriesGrid"></div>
+                </section>
+
+                <section id="kids" class="mb-5">
+                    <h2 class="section-title"><i class="fas fa-child text-info"></i> Para Toda a Família</h2>
+                    <div class="row g-4" id="kidsGrid"></div>
+                </section>
+
+                <section id="watchlistSection" class="mb-5" style="display: none;">
+                    <h2 class="section-title"><i class="fas fa-heart text-danger"></i> Minha Lista</h2>
+                    <div class="row g-4" id="watchlistGrid"></div>
+                </section>
             </div>
-        </header>
+        </div>
 
-        <!-- Catalog Sections -->
-        <div class="container-fluid px-5 pb-5 mt-5">
-            <div id="continueWatchingSection" class="mb-5" style="display: none;">
-                <h2 class="section-title"><i class="fas fa-history text-accent"></i> Continue Assistindo</h2>
-                <div class="row g-4" id="continueWatchingGrid"></div>
+        <!-- View 2: Full Catalog View (SPA) -->
+        <div id="mainContent" style="display: none;">
+            <div class="container-fluid px-5 pt-5 mt-5">
+                <div class="d-flex justify-content-between align-items-center mb-5">
+                    <h2 id="viewSectionTitle" class="section-title mb-0">Catálogo</h2>
+                </div>
+                <div id="mainContentGrid" class="row g-4"></div>
             </div>
-
-            <div id="franchiseSection"></div>
-
-            <section id="movies" class="mb-5">
-                <h2 class="section-title"><i class="fas fa-fire text-danger"></i> Últimos Lançamentos</h2>
-                <div class="row g-4" id="moviesGrid"></div>
-            </section>
-
-            <section id="series" class="mb-5">
-                <h2 class="section-title"><i class="fas fa-tv text-danger"></i> Séries & Originais</h2>
-                <div class="row g-4" id="seriesGrid"></div>
-            </section>
-
-            <section id="kids" class="mb-5">
-                <h2 class="section-title"><i class="fas fa-child text-info"></i> Para Toda a Família</h2>
-                <div class="row g-4" id="kidsGrid"></div>
-            </section>
         </div>
     </main>
 

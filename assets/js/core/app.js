@@ -269,21 +269,36 @@ window.openDetailsById = function(id) {
 
 function renderGrid(container, items) {
     if (!container) return;
+
+    if (items.length === 0) {
+        container.innerHTML = `
+            <div class="col-12 text-center py-5 animate-fade-in">
+                <i class="fas fa-film fa-3x text-dim mb-3"></i>
+                <p class="text-dim">Nenhum conteúdo encontrado nesta categoria.</p>
+            </div>
+        `;
+        return;
+    }
+
     container.innerHTML = '';
 
     items.forEach((item, index) => {
         const col = document.createElement('div');
         col.className = 'col-6 col-md-4 col-lg-2 mb-4';
-        col.style.animationDelay = `${index * 0.1}s`;
+        col.style.animationDelay = `${index * 0.05}s`;
 
         col.innerHTML = `
             <div class="media-card animate-fade-in">
-                <img src="${item.poster}" alt="${item.title}" loading="lazy">
+                <div class="media-card-skeleton"></div>
+                <img src="${item.poster}" alt="${item.title}" loading="lazy" onload="this.previousElementSibling.style.display='none'">
                 <div class="media-card-info">
                     <h5 class="fw-900 mb-1 text-truncate">${item.title}</h5>
                     <div class="d-flex justify-content-between align-items-center">
                         <span class="badge border border-secondary extra-small">${item.year}</span>
-                        <span class="text-accent fw-bold small">★ ${item.rating || 'N/A'}</span>
+                        <div class="d-flex align-items-center gap-1">
+                             <i class="fas fa-star text-warning small"></i>
+                             <span class="text-accent fw-bold small">${item.rating || 'N/A'}</span>
+                        </div>
                     </div>
                 </div>
             </div>

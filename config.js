@@ -15,5 +15,5 @@ window.CINE_MAX_CONFIG = {
     FIREBASE_APP_ID: "",
 
     // Google Gemini AI Configuration
-    GEMINI_API_KEY: "AQ.Ab8RN6I4btIUcEQcq-j3gzohvxi9iw_udU5nRdEes-MuhCl-Iw"
+    GEMINI_API_KEY: ""
 };

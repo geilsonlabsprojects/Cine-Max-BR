@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CineMaxBR Player | Ultra Evolution</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="assets/css/styles.css">
+    <link rel="stylesheet" href="assets/css/player.css">
+    <style>
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: #000; overflow: hidden; }
+        #videoContainer { width: 100%; height: 100%; position: relative; }
+        .back-btn { position: absolute; top: 30px; left: 30px; z-index: 9999; color: #fff; text-decoration: none; font-size: 1.5rem; opacity: 0.5; transition: 0.3s; }
+        .back-btn:hover { opacity: 1; transform: translateX(-5px); color: var(--accent); }
+    </style>
+</head>
+<body>
+    <a href="index.html" class="back-btn" id="btnBack">
+        <i class="fas fa-arrow-left"></i>
+    </a>
+    <div id="videoContainer"></div>
+
+    <script src="config.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+    <script type="module">
+        import { WebPlayer } from './assets/js/player/player.js';
+        import { subscribeToMedia, auth } from './assets/js/services/firebase-service.js';
+
+        const player = new WebPlayer('videoContainer');
+        const params = new URLSearchParams(window.location.search);
+        const mediaId = params.get('id');
+
+        if (!mediaId) {
+            window.location.href = 'index.html';
+        }
+
+        auth.onAuthStateChanged(user => {
+            if (!user) {
+                window.location.href = 'index.html';
+                return;
+            }
+
+            subscribeToMedia(data => {
+                const item = data.find(m => m.id === mediaId);
+                if (item) {
+                    const url = item.videoUrl || item.trailerUrl;
+                    const history = JSON.parse(localStorage.getItem(`cinemax_history_${user.uid}`) || '[]');
+                    const saved = history.find(h => h.id === mediaId);
+                    player.render(item, url, saved ? saved.time : 0);
+                } else {
+                    console.error("Mídia não encontrada");
+                }
+            });
+        });
+
+        window.closePlayer = () => window.history.back();
+    </script>
+</body>
+</html>

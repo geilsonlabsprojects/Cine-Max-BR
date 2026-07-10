@@ -208,38 +208,42 @@
     to { transform: translate(-50%, -50%) rotate(360deg); }
 }
 
-/* Quality Menu Premium */
+.quality-wrapper {
+    position: relative;
+}
+
 .quality-menu {
     position: absolute;
-    bottom: 60px;
+    bottom: 55px;
     right: 0;
-    background: rgba(10, 10, 10, 0.9);
+    background: rgba(10, 10, 10, 0.95);
     backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 12px;
-    padding: 10px;
-    min-width: 140px;
+    min-width: 150px;
+    padding: 10px 0;
+    z-index: 100;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.8);
     display: none;
-    border: 1px solid rgba(255,255,255,0.08);
-    box-shadow: 0 20px 40px rgba(0,0,0,0.6);
 }
 
-.quality-menu.visible {
-    display: block;
-    animation: qualityIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-@keyframes qualityIn {
-    from { opacity: 0; transform: translateY(15px) scale(0.95); }
-    to { opacity: 1; transform: translateY(0) scale(1); }
+.quality-menu-header {
+    padding: 10px 20px;
+    font-size: 11px;
+    font-weight: 800;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.4);
+    letter-spacing: 1.5px;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    margin-bottom: 5px;
 }
 
 .quality-item {
-    padding: 10px 15px;
-    color: #aaa;
-    cursor: pointer;
-    border-radius: 8px;
+    padding: 10px 20px;
+    color: #fff;
     font-size: 14px;
     font-weight: 600;
+    cursor: pointer;
     transition: all 0.2s;
     display: flex;
     justify-content: space-between;
@@ -247,20 +251,18 @@
 }
 
 .quality-item:hover {
-    background: rgba(255,255,255,0.05);
-    color: #fff;
+    background: rgba(229, 9, 20, 0.1);
 }
 
 .quality-item.active {
     color: var(--player-accent);
-    background: rgba(229, 9, 20, 0.05);
 }
 
 .quality-item.active::after {
     content: '\f00c';
     font-family: 'Font Awesome 6 Free';
     font-weight: 900;
-    font-size: 10px;
+    font-size: 12px;
 }
 
 /* Controls Interaction */

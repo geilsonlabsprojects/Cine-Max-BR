@@ -30,14 +30,29 @@ export class WebPlayer {
         `;
         this.mountPoint.querySelector('#playerContainer').prepend(titleContainer);
 
+        const videoContainer = this.mountPoint.querySelector('#playerContainer');
         this.video = this.mountPoint.querySelector('#mainVideo');
         this.engine = new HLSEngine(this.video);
 
-        initControls(this.video, this.mountPoint.querySelector('#playerContainer'), item);
+        initControls(this.video, videoContainer, item);
+
+        // Quality Persistence logic
+        const savedQuality = localStorage.getItem('cinemax_player_quality') || -1;
 
         // Listen for quality switch
         window.addEventListener('hlsSwitchLevel', (e) => {
-            if (this.engine) this.engine.switchLevel(e.detail);
+            if (this.engine) {
+                this.engine.switchLevel(e.detail);
+                localStorage.setItem('cinemax_player_quality', e.detail);
+            }
+        });
+
+        // Apply saved quality when levels are loaded
+        window.addEventListener('hlsLevels', (e) => {
+            const levels = e.detail;
+            if (savedQuality != -1 && savedQuality < levels.length) {
+                this.engine.switchLevel(parseInt(savedQuality));
+            }
         });
 
         // Resume from saved time

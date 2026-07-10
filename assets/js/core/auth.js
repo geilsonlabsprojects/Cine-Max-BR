@@ -35,21 +35,33 @@ export function initLogin() {
  */
 export function checkAuth() {
     return new Promise((resolve) => {
+        // Timeout para não travar a tela em branco/loading se o Firebase demorar
+        const timeout = setTimeout(() => {
+            console.warn("Auth check timed out, redirecting to login...");
+            window.location.href = 'login.html';
+        }, 8000);
+
         auth.onAuthStateChanged(async (user) => {
+            clearTimeout(timeout);
             if (!user) {
                 window.location.href = 'login.html';
                 return;
             }
 
-            const isAuthorized = await checkUserAuthorization(user.uid);
-            const termsAccepted = localStorage.getItem(`cinemax_terms_${user.uid}`);
+            try {
+                const isAuthorized = await checkUserAuthorization(user.uid);
+                const termsAccepted = localStorage.getItem(`cinemax_terms_${user.uid}`);
 
-            if (!isAuthorized || termsAccepted !== 'true') {
+                if (!isAuthorized || termsAccepted !== 'true') {
+                    window.location.href = 'login.html';
+                    return;
+                }
+
+                resolve(user);
+            } catch (err) {
+                console.error("Authorization check failed:", err);
                 window.location.href = 'login.html';
-                return;
             }
-
-            resolve(user);
         });
     });
 }

@@ -2,7 +2,7 @@
  * CineMaxBR HYPER-PREMIUM Core Engine
  * "One Million Times Better" Implementation
  */
-import { subscribeToMedia, subscribeToOldMovies, verifyAccessCode } from '../services/firebase-service.js';
+import { subscribeToMedia, subscribeToOldMovies, verifyAccessCode, incrementViews } from '../services/firebase-service.js';
 import { WebPlayer } from '../components/web-player.js';
 
 let allMedia = [];
@@ -19,43 +19,71 @@ document.addEventListener('DOMContentLoaded', () => {
  */
 function initAccessControl() {
     const isAuthorized = localStorage.getItem('cinemax_access_granted');
+    const termsAccepted = localStorage.getItem('cinemax_terms_accepted');
     const gate = document.getElementById('accessGate');
 
-    if (isAuthorized === 'true') {
+    if (isAuthorized === 'true' && termsAccepted === 'true') {
         gate.style.display = 'none';
         startApp();
     } else {
-        const btn = document.getElementById('btnVerifyAccess');
+        const codeStep = document.getElementById('codeStep');
+        const termsStep = document.getElementById('termsStep');
+
+        const btnVerify = document.getElementById('btnVerifyAccess');
         const input = document.getElementById('accessCodeInput');
         const error = document.getElementById('accessError');
 
-        btn.onclick = async () => {
+        const btnAccept = document.getElementById('btnAcceptTerms');
+        const checkTerms = document.getElementById('checkTerms');
+
+        // Stage 1: Auth
+        if (isAuthorized === 'true') {
+            codeStep.style.display = 'none';
+            termsStep.style.display = 'block';
+        }
+
+        btnVerify.onclick = async () => {
             const code = input.value.trim();
             if (!code) return;
 
-            btn.disabled = true;
-            btn.innerText = "VERIFICANDO...";
+            btnVerify.disabled = true;
+            btnVerify.innerText = "VERIFICANDO...";
 
             const isValid = await verifyAccessCode(code);
 
             if (isValid) {
                 localStorage.setItem('cinemax_access_granted', 'true');
-                gate.classList.add('animate-fade-out');
+                codeStep.classList.add('animate-fade-out');
                 setTimeout(() => {
-                    gate.style.display = 'none';
-                    startApp();
-                }, 500);
+                    codeStep.style.display = 'none';
+                    termsStep.style.display = 'block';
+                    termsStep.classList.add('animate-fade-in');
+                }, 400);
             } else {
                 error.style.display = 'block';
-                btn.disabled = false;
-                btn.innerText = "ENTRAR AGORA";
+                btnVerify.disabled = false;
+                btnVerify.innerText = "ENTRAR AGORA";
                 input.value = '';
                 input.focus();
             }
         };
 
+        // Stage 2: Terms
+        checkTerms.onchange = () => {
+            btnAccept.disabled = !checkTerms.checked;
+        };
+
+        btnAccept.onclick = () => {
+            localStorage.setItem('cinemax_terms_accepted', 'true');
+            gate.classList.add('animate-fade-out');
+            setTimeout(() => {
+                gate.style.display = 'none';
+                startApp();
+            }, 500);
+        };
+
         input.onkeypress = (e) => {
-            if (e.key === 'Enter') btn.click();
+            if (e.key === 'Enter') btnVerify.click();
         };
     }
 }
@@ -64,6 +92,7 @@ function startApp() {
     initHyperUI();
     initDataFlow();
     initCustomCursor();
+    initSearch();
 }
 
 /**
@@ -108,7 +137,7 @@ function initCustomCursor() {
         follower.style.top = e.clientY - 17.5 + 'px';
     });
 
-    document.querySelectorAll('button, a, .media-card').forEach(el => {
+    document.querySelectorAll('button, a, .media-card, #btnOpenSearch, #btnCloseSearch').forEach(el => {
         el.addEventListener('mouseenter', () => {
             follower.style.transform = 'scale(1.5)';
             follower.style.borderColor = 'var(--accent)';
@@ -155,6 +184,7 @@ function renderHyperUI() {
     console.log("--- START HYPER RENDER ---");
     const moviesGrid = document.getElementById('moviesGrid');
     const seriesGrid = document.getElementById('seriesGrid');
+    const kidsGrid = document.getElementById('kidsGrid');
     const franchiseContainer = document.getElementById('franchiseSection');
 
     if (!franchiseContainer) {
@@ -191,9 +221,38 @@ function renderHyperUI() {
         }, 500);
     }
 
-    renderGrid(moviesGrid, allMedia.filter(m => m.type === 'movie' || m.isOld));
-    renderGrid(seriesGrid, allMedia.filter(m => m.type === 'series' && !m.isOld));
+    renderGrid(moviesGrid, allMedia.filter(m => (m.type === 'movie' || m.isOld) && !isKids(m)));
+    renderGrid(seriesGrid, allMedia.filter(m => m.type === 'series' && !m.isOld && !isKids(m)));
+    renderGrid(kidsGrid, allMedia.filter(m => isKids(m)));
     renderFranchiseGroupsUI(franchiseContainer);
+    renderWatchlist();
+}
+
+function renderWatchlist() {
+    const favorites = JSON.parse(localStorage.getItem('cinemax_favorites') || '[]');
+    const watchlistGrid = document.getElementById('watchlistGrid');
+    const section = document.getElementById('watchlistSection');
+
+    if (favorites.length === 0) {
+        if (section) section.style.display = 'none';
+        return;
+    }
+
+    if (!section) {
+        const main = document.querySelector('main');
+        const html = `
+            <section id="watchlistSection" class="mb-5 animate-fade-in">
+                <h2 class="section-title">Minha Lista</h2>
+                <div class="row g-4" id="watchlistGrid"></div>
+            </section>
+        `;
+        main.insertAdjacentHTML('afterbegin', html);
+    } else {
+        section.style.display = 'block';
+    }
+
+    const filtered = allMedia.filter(m => favorites.includes(m.id));
+    renderGrid(document.getElementById('watchlistGrid'), filtered);
 }
 
 function processFranchiseGroups() {
@@ -267,6 +326,14 @@ window.openDetailsById = function(id) {
     if (item) openDetails(item);
 }
 
+function isKids(m) {
+    const kidsGenres = ['animação', 'família', 'kids', 'infantil'];
+    const genre = (m.genre || '').toLowerCase();
+    const isL = m.rating === 'L';
+    const hasKidsGenre = kidsGenres.some(g => genre.includes(g));
+    return isL || hasKidsGenre;
+}
+
 function renderGrid(container, items) {
     if (!container) return;
 
@@ -324,7 +391,7 @@ window.openDetails = function(item) {
             <div class="col-md-8 p-4 p-md-5 d-flex flex-column content-glass">
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <span class="badge bg-danger rounded-pill px-3 py-2 fw-bold">${item.type === 'series' ? 'SÉRIE' : 'FILME'}</span>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
 
                 <h1 class="display-3 fw-900 mb-2 cinematic-title">${item.title}</h1>
@@ -335,7 +402,13 @@ window.openDetails = function(item) {
                     <span class="text-white-50"><i class="fas fa-film me-2"></i>${item.genre || 'Aventura'}</span>
                 </div>
 
-                <p class="lead mb-4 description-text">${item.desc}</p>
+                <p class="lead mb-4 description-text" style="max-height: 150px; overflow-y: auto;">${item.desc}</p>
+
+                ${item.tags ? `
+                <div class="d-flex flex-wrap gap-2 mb-4">
+                    ${item.tags.split(',').map(tag => `<span class="detail-pill">${tag.trim()}</span>`).join('')}
+                </div>
+                ` : ''}
 
                 ${renderFranchiseSuggest(item)}
 
@@ -343,26 +416,16 @@ window.openDetails = function(item) {
                     <button class="btn btn-danger btn-lg px-5 py-3 fw-900 rounded-pill action-btn pulse-glow" onclick="startPlayback('${item.id}')">
                         <i class="fas fa-play me-2"></i> ASSISTIR AGORA
                     </button>
+                    <button class="btn btn-outline-light btn-lg px-4 py-3 fw-800 rounded-pill action-btn" onclick="toggleFavorite('${item.id}', this)">
+                        <i class="${isFavorite(item.id) ? 'fas' : 'far'} fa-heart me-2"></i> MINHA LISTA
+                    </button>
                     ${item.trailer ? `
                     <button class="btn btn-outline-light btn-lg px-4 py-3 fw-800 rounded-pill action-btn" onclick="openTrailer('${item.trailer}')">
                         <i class="fas fa-film me-2"></i> TRAILER
                     </button>` : ''}
                 </div>
-            </div>
-        </div>
-    `;
 
-    const detailsModal = new bootstrap.Modal(document.getElementById('detailsModal'));
-    detailsModal.show();
-};
-                    <button class="btn btn-secondary btn-lg px-4 py-3 fw-800 rounded-3">
-                        <i class="fas fa-plus"></i>
-                    </button>
-                </div>
-
-                ${isSeries ? renderSeasonsUI(item) : ''}
-
-                <div class="mt-auto pt-4 border-top border-secondary row g-3">
+                <div class="mt-4 pt-4 border-top border-secondary row g-3">
                     <div class="col-4"><p class="mb-0 x-small fw-bold text-secondary text-uppercase">Direção</p><p class="small text-white mb-0">${item.director || 'N/A'}</p></div>
                     <div class="col-4"><p class="mb-0 x-small fw-bold text-secondary text-uppercase">Estúdio</p><p class="small text-white mb-0">${item.studio || 'N/A'}</p></div>
                     <div class="col-4"><p class="mb-0 x-small fw-bold text-secondary text-uppercase">Lançamento</p><p class="small text-white mb-0">${item.year}</p></div>
@@ -371,9 +434,9 @@ window.openDetails = function(item) {
         </div>
     `;
 
-    const modal = new bootstrap.Modal(document.getElementById('detailsModal'));
-    modal.show();
-}
+    const detailsModal = new bootstrap.Modal(document.getElementById('detailsModal'));
+    detailsModal.show();
+};
 
 function renderFranchiseSuggest(item) {
     if (!item.franchiseId || !groupedFranchises) return '';
@@ -394,6 +457,9 @@ function renderFranchiseSuggest(item) {
 window.startPlayback = function(id) {
     const item = allMedia.find(m => m.id === id);
     if (!item) return;
+
+    incrementViews(item.id, item.isOld);
+
     const url = item.videoUrl || item.trailerUrl;
     bootstrap.Modal.getInstance(document.getElementById('detailsModal'))?.hide();
     openPlayer(item, url);
@@ -411,4 +477,73 @@ function openPlayer(item, url) {
 window.closePlayer = function() {
     document.getElementById('playerOverlay').style.display = 'none';
     player.stop(); // Assuming stop method added or just innerHTML = ''
+}
+
+/**
+ * Watchlist Logic
+ */
+window.isFavorite = function(id) {
+    const favorites = JSON.parse(localStorage.getItem('cinemax_favorites') || '[]');
+    return favorites.includes(id);
+}
+
+window.toggleFavorite = function(id, btn) {
+    let favorites = JSON.parse(localStorage.getItem('cinemax_favorites') || '[]');
+    const icon = btn.querySelector('i');
+
+    if (favorites.includes(id)) {
+        favorites = favorites.filter(fid => fid !== id);
+        icon.classList.replace('fas', 'far');
+    } else {
+        favorites.push(id);
+        icon.classList.replace('far', 'fas');
+    }
+
+    localStorage.setItem('cinemax_favorites', JSON.stringify(favorites));
+    renderWatchlist();
+}
+
+/**
+ * Search Engine Implementation
+ */
+function initSearch() {
+    const btnOpen = document.getElementById('btnOpenSearch');
+    const btnClose = document.getElementById('btnCloseSearch');
+    const overlay = document.getElementById('searchOverlay');
+    const input = document.getElementById('searchInput');
+    const resultsGrid = document.getElementById('searchResults');
+
+    if (!btnOpen || !btnClose || !overlay || !input) return;
+
+    btnOpen.onclick = () => {
+        overlay.classList.add('active');
+        input.focus();
+        document.body.style.overflow = 'hidden';
+    };
+
+    btnClose.onclick = () => {
+        overlay.classList.remove('active');
+        input.value = '';
+        resultsGrid.innerHTML = '';
+        document.body.style.overflow = 'auto';
+    };
+
+    input.onkeyup = (e) => {
+        if (e.key === 'Escape') btnClose.click();
+
+        const query = input.value.toLowerCase().trim();
+        if (query.length < 2) {
+            resultsGrid.innerHTML = '';
+            return;
+        }
+
+        const filtered = allMedia.filter(m =>
+            m.title.toLowerCase().includes(query) ||
+            (m.genre && m.genre.toLowerCase().includes(query)) ||
+            (m.director && m.director.toLowerCase().includes(query)) ||
+            (m.tags && m.tags.toLowerCase().includes(query))
+        );
+
+        renderGrid(resultsGrid, filtered);
+    };
 }

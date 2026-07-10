@@ -1,6 +1,6 @@
 /**
- * Premium Web Player Component
- * Handles HTML5 Video, YouTube Iframes, and Custom Controls
+ * Premium Web Player Component - CineMaxBR Ultra Evolution
+ * Fixed Stability & Improved Playback Logic
  */
 
 export class WebPlayer {
@@ -9,30 +9,33 @@ export class WebPlayer {
         this.video = null;
         this.hls = null;
         this.isPlaying = false;
-        this.isMuted = false;
-        this.duration = 0;
-        this.currentTime = 0;
+        this.playPromise = null;
     }
 
     render(item, url) {
+        if (!this.container) return;
+
+        // Clean up previous state
+        this.stop();
+
         this.container.innerHTML = `
             <div class="custom-player-container">
                 <div class="player-info-top">
-                    <div class="player-title">${item.title}</div>
-                    <div class="player-subtitle">${item.type === 'series' ? 'Série' : 'Filme'} • ${item.year}</div>
+                    <div class="player-title">${item?.title || 'Conteúdo'}</div>
+                    <div class="player-subtitle">${item?.type === 'series' ? 'Série' : 'Filme'} • ${item?.year || ''}</div>
                 </div>
 
                 <div class="center-play-btn" id="centerPlay">
                     <i class="fas fa-play"></i>
                 </div>
 
-                <div class="player-loader" id="playerLoader"></div>
+                <div class="player-loader" id="playerLoader" style="display: block;"></div>
 
                 <div class="video-wrapper" id="videoWrapper">
                     ${this.createVideoElement(url)}
                 </div>
 
-                <div class="player-controls visible" id="playerControls">
+                <div class="player-controls" id="playerControls">
                     <div class="player-progress-container" id="progressContainer">
                         <div class="player-seek-preview" id="seekPreview">00:00</div>
                         <div class="player-progress-bar" id="progressBar">
@@ -58,7 +61,7 @@ export class WebPlayer {
 
                         <div class="player-group">
                             <div class="quality-selector-wrapper">
-                                <button class="player-btn" id="qualityBtn"><i class="fas fa-hd"></i></button>
+                                <button class="player-btn" id="qualityBtn" style="display:none;"><i class="fas fa-hd"></i></button>
                                 <div class="quality-menu" id="qualityMenu"></div>
                             </div>
                             <button class="player-btn" id="fullscreenBtn"><i class="fas fa-expand"></i></button>
@@ -72,25 +75,34 @@ export class WebPlayer {
     }
 
     createVideoElement(url) {
-        if (!url) {
-            console.error("ERRO: URL de vídeo não fornecida.");
-            return `<div class="player-error d-flex flex-column align-items-center justify-content-center h-100 text-white">
+        if (!url || typeof url !== 'string') {
+            console.error("ERRO: URL de vídeo inválida ou não fornecida.");
+            return `<div class="player-error d-flex flex-column align-items-center justify-content-center h-100 text-white p-4 text-center">
                 <i class="fas fa-exclamation-triangle fa-3x mb-3 text-danger"></i>
-                <p>O link do vídeo não está disponível para este conteúdo.</p>
+                <h4 class="fw-bold">Erro de Mídia</h4>
+                <p class="text-white-50">O link do vídeo não está disponível ou está em formato incompatível.</p>
             </div>`;
         }
 
         const isYouTube = url.includes('youtube.com') || url.includes('youtu.be');
         if (isYouTube) {
             const videoId = url.split('v=')[1]?.split('&')[0] || url.split('/').pop();
-            return `<iframe src="https://www.youtube.com/embed/${videoId}?autoplay=1&controls=0&modestbranding=1&rel=0&iv_load_policy=3" allow="autoplay; encrypted-media" allowfullscreen></iframe>`;
+            return `<iframe id="playerIframe" src="https://www.youtube.com/embed/${videoId}?autoplay=1&controls=0&modestbranding=1&rel=0&iv_load_policy=3" allow="autoplay; encrypted-media" allowfullscreen></iframe>`;
         } else {
-            return `<video id="mainVideo" playsinline></video>`;
+            return `<video id="mainVideo" playsinline crossorigin="anonymous"></video>`;
         }
     }
 
     initControls(url) {
         this.video = this.container.querySelector('#mainVideo');
+        if (!this.video) {
+            const iframe = this.container.querySelector('#playerIframe');
+            if (iframe) {
+                 iframe.onload = () => this.container.querySelector('#playerLoader').style.display = 'none';
+            }
+            return;
+        }
+
         const playPauseBtn = this.container.querySelector('#playPauseBtn');
         const centerPlay = this.container.querySelector('#centerPlay');
         const progressBar = this.container.querySelector('#progressBar');
@@ -102,58 +114,96 @@ export class WebPlayer {
         const muteBtn = this.container.querySelector('#muteBtn');
         const fullscreenBtn = this.container.querySelector('#fullscreenBtn');
         const qualityBtn = this.container.querySelector('#qualityBtn');
-        const qualityMenu = this.container.querySelector('#qualityMenu');
+        const loader = this.container.querySelector('#playerLoader');
+        const controls = this.container.querySelector('#playerControls');
 
-        if (!this.video) return;
+        // Safe Play Function to avoid AbortError
+        const safePlay = () => {
+            if (this.video && this.video.paused) {
+                this.playPromise = this.video.play();
+                if (this.playPromise !== undefined) {
+                    this.playPromise.then(() => {
+                        this.isPlaying = true;
+                        playPauseBtn.innerHTML = '<i class="fas fa-pause"></i>';
+                        centerPlay.classList.remove('visible');
+                    }).catch(error => {
+                        console.warn("Playback prevented or interrupted:", error);
+                        this.isPlaying = false;
+                    });
+                }
+            }
+        };
 
-        // Initialize HLS
-        if (Hls.isSupported() && (url.includes('.m3u8') || url.includes('master'))) {
-            this.hls = new Hls();
+        const safePause = () => {
+            if (this.video && !this.video.paused) {
+                if (this.playPromise !== undefined) {
+                    this.playPromise.then(() => {
+                        this.video.pause();
+                        this.isPlaying = false;
+                        playPauseBtn.innerHTML = '<i class="fas fa-play"></i>';
+                        centerPlay.classList.add('visible');
+                    });
+                } else {
+                    this.video.pause();
+                    this.isPlaying = false;
+                    playPauseBtn.innerHTML = '<i class="fas fa-play"></i>';
+                    centerPlay.classList.add('visible');
+                }
+            }
+        };
+
+        // Initialize HLS if needed
+        const isHls = url && (url.includes('.m3u8') || url.includes('master'));
+        if (window.Hls && Hls.isSupported() && isHls) {
+            this.hls = new Hls({
+                maxBufferLength: 30,
+                capLevelToPlayerSize: true
+            });
             this.hls.loadSource(url);
             this.hls.attachMedia(this.video);
             this.hls.on(Hls.Events.MANIFEST_PARSED, () => {
+                qualityBtn.style.display = 'block';
                 this.renderQualityMenu(this.hls.levels);
-                this.video.play();
+                safePlay();
             });
-        } else {
+            this.hls.on(Hls.Events.ERROR, (event, data) => {
+                if (data.fatal) {
+                    console.error("Fatal HLS Error:", data.type);
+                    loader.innerHTML = '<p class="small text-danger">Erro de carregamento</p>';
+                }
+            });
+        } else if (url) {
             this.video.src = url;
-            this.video.play();
+            this.video.oncanplay = () => {
+                loader.style.display = 'none';
+                safePlay();
+            };
         }
 
-        // Shortcuts
-        const handleShortcuts = (e) => {
-            if (document.activeElement.tagName === 'INPUT') return;
-            switch(e.key.toLowerCase()) {
-                case ' ': e.preventDefault(); togglePlay(); break;
-                case 'k': e.preventDefault(); togglePlay(); break;
-                case 'f': e.preventDefault(); toggleFullscreen(); break;
-                case 'm': e.preventDefault(); toggleMute(); break;
-                case 'arrowright': this.video.currentTime += 10; break;
-                case 'arrowleft': this.video.currentTime -= 10; break;
-                case 'arrowup': this.video.volume = Math.min(1, this.video.volume + 0.1); break;
-                case 'arrowdown': this.video.volume = Math.max(0, this.video.volume - 0.1); break;
-            }
-        };
-        window.addEventListener('keydown', handleShortcuts);
-        this.shortcutListener = handleShortcuts;
+        // Event Listeners
+        this.video.onwaiting = () => loader.style.display = 'block';
+        this.video.onplaying = () => loader.style.display = 'none';
 
-        const togglePlay = () => {
-            if (this.video.paused) {
-                this.video.play();
-                playPauseBtn.innerHTML = '<i class="fas fa-pause"></i>';
-                centerPlay.classList.remove('visible');
-            } else {
-                this.video.pause();
-                playPauseBtn.innerHTML = '<i class="fas fa-play"></i>';
-                centerPlay.innerHTML = '<i class="fas fa-play"></i>';
-                centerPlay.classList.add('visible');
-            }
+        // Auto-hide controls
+        let hideTimeout;
+        const resetHideTimeout = () => {
+            const el = this.container.querySelector('.custom-player-container');
+            el.classList.add('user-active');
+            clearTimeout(hideTimeout);
+            hideTimeout = setTimeout(() => {
+                if (this.isPlaying) el.classList.remove('user-active');
+            }, 3000);
         };
+        this.container.addEventListener('mousemove', resetHideTimeout);
+        this.container.addEventListener('touchstart', resetHideTimeout);
+        resetHideTimeout();
+
+        const togglePlay = () => this.video.paused ? safePlay() : safePause();
 
         const toggleFullscreen = () => {
             const el = this.container.querySelector('.custom-player-container');
             if (!document.fullscreenElement) {
-                el.requestFullscreen();
+                el.requestFullscreen().catch(err => console.error(err));
                 fullscreenBtn.innerHTML = '<i class="fas fa-compress"></i>';
             } else {
                 document.exitFullscreen();
@@ -161,33 +211,17 @@ export class WebPlayer {
             }
         };
 
-        const toggleMute = () => {
-            this.video.muted = !this.video.muted;
-            this.updateVolumeIcon(this.video.muted ? 0 : this.video.volume);
-        };
+        playPauseBtn.onclick = (e) => { e.stopPropagation(); togglePlay(); };
+        centerPlay.onclick = (e) => { e.stopPropagation(); togglePlay(); };
+        fullscreenBtn.onclick = (e) => { e.stopPropagation(); toggleFullscreen(); };
 
-        playPauseBtn.onclick = togglePlay;
-        centerPlay.onclick = togglePlay;
-        fullscreenBtn.onclick = toggleFullscreen;
-        muteBtn.onclick = toggleMute;
-
-        // Progress & Seek Preview
+        // Progress Logic
         this.video.ontimeupdate = () => {
+            if (isNaN(this.video.duration)) return;
             const percent = (this.video.currentTime / this.video.duration) * 100;
             progressBar.style.width = `${percent}%`;
             currentTimeEl.innerText = this.formatTime(this.video.currentTime);
         };
-
-        progressContainer.onmousemove = (e) => {
-            const rect = progressContainer.getBoundingClientRect();
-            const pos = (e.pageX - rect.left) / rect.width;
-            const time = pos * this.video.duration;
-            seekPreview.innerText = this.formatTime(time);
-            seekPreview.style.left = `${pos * 100}%`;
-            seekPreview.style.display = 'block';
-        };
-
-        progressContainer.onmouseleave = () => seekPreview.style.display = 'none';
 
         progressContainer.onclick = (e) => {
             const rect = progressContainer.getBoundingClientRect();
@@ -195,39 +229,72 @@ export class WebPlayer {
             this.video.currentTime = pos * this.video.duration;
         };
 
-        // Quality Menu
-        qualityBtn.onclick = (e) => {
-            e.stopPropagation();
-            qualityMenu.classList.toggle('visible');
+        // Volume
+        volumeSlider.oninput = (e) => {
+            this.video.volume = e.target.value;
+            this.updateVolumeIcon(e.target.value);
+            this.video.muted = (e.target.value == 0);
         };
-        document.addEventListener('click', () => qualityMenu.classList.remove('visible'));
+
+        muteBtn.onclick = () => {
+            this.video.muted = !this.video.muted;
+            this.updateVolumeIcon(this.video.muted ? 0 : this.video.volume);
+            volumeSlider.value = this.video.muted ? 0 : this.video.volume;
+        };
 
         this.video.onloadedmetadata = () => {
             totalDurationEl.innerText = this.formatTime(this.video.duration);
+            loader.style.display = 'none';
+            controls.classList.add('visible');
         };
+
+        // Keyboard Shortcuts
+        const handleKeys = (e) => {
+            if (document.activeElement.tagName === 'INPUT') return;
+            switch(e.key.toLowerCase()) {
+                case ' ': case 'k': e.preventDefault(); togglePlay(); break;
+                case 'f': e.preventDefault(); toggleFullscreen(); break;
+                case 'm': e.preventDefault(); muteBtn.click(); break;
+                case 'arrowright': this.video.currentTime += 10; break;
+                case 'arrowleft': this.video.currentTime -= 10; break;
+            }
+        };
+        window.addEventListener('keydown', handleKeys);
+        this.shortcutListener = handleKeys;
     }
 
     renderQualityMenu(levels) {
         const menu = this.container.querySelector('#qualityMenu');
+        const btn = this.container.querySelector('#qualityBtn');
+
         let html = `<div class="quality-item active" data-level="-1">Automático</div>`;
         levels.forEach((level, index) => {
             html += `<div class="quality-item" data-level="${index}">${level.height}p</div>`;
         });
         menu.innerHTML = html;
 
+        btn.onclick = (e) => {
+            e.stopPropagation();
+            menu.classList.toggle('visible');
+        };
+
         menu.querySelectorAll('.quality-item').forEach(item => {
             item.onclick = () => {
                 const level = parseInt(item.dataset.level);
-                this.hls.currentLevel = level;
+                if (this.hls) this.hls.currentLevel = level;
                 menu.querySelectorAll('.quality-item').forEach(i => i.classList.remove('active'));
                 item.classList.add('active');
+                menu.classList.remove('visible');
             };
         });
+
+        document.addEventListener('click', () => menu.classList.remove('visible'));
     }
 
     stop() {
         if (this.shortcutListener) {
             window.removeEventListener('keydown', this.shortcutListener);
+            this.shortcutListener = null;
         }
         if (this.hls) {
             this.hls.destroy();
@@ -237,11 +304,13 @@ export class WebPlayer {
             this.video.pause();
             this.video.src = "";
             this.video.load();
+            this.video = null;
         }
-        this.container.innerHTML = "";
+        if (this.container) this.container.innerHTML = "";
     }
 
     formatTime(seconds) {
+        if (isNaN(seconds)) return "00:00";
         const h = Math.floor(seconds / 3600);
         const m = Math.floor((seconds % 3600) / 60);
         const s = Math.floor(seconds % 60);
@@ -254,6 +323,7 @@ export class WebPlayer {
 
     updateVolumeIcon(val) {
         const icon = this.container.querySelector('#muteBtn i');
+        if (!icon) return;
         if (val == 0) icon.className = 'fas fa-volume-mute';
         else if (val < 0.5) icon.className = 'fas fa-volume-down';
         else icon.className = 'fas fa-volume-up';

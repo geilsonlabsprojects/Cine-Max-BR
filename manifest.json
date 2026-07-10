@@ -1,0 +1,21 @@
+{
+  "name": "CineMaxBR Ultra",
+  "short_name": "CineMaxBR",
+  "description": "A melhor experiência cinematográfica ultra premium.",
+  "start_url": "index.html",
+  "display": "standalone",
+  "background_color": "#000000",
+  "theme_color": "#E50914",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/705/705062.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/705/705062.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

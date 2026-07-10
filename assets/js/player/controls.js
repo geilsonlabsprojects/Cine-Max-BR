@@ -14,6 +14,7 @@ export function initControls(video, container, mediaItem) {
     const skipForwardBtn = container.querySelector('#skipForwardBtn');
     const pipBtn = container.querySelector('#pipBtn');
     const loadingOverlay = container.querySelector('#playerLoading');
+    const centerPlayBtn = container.querySelector('#centerPlayBtn');
 
     let lastSaveTime = 0;
 
@@ -22,12 +23,21 @@ export function initControls(video, container, mediaItem) {
         if (video.paused) {
             video.play();
             playPauseBtn.innerHTML = '<i class="fas fa-pause"></i>';
+            if (centerPlayBtn) {
+                centerPlayBtn.innerHTML = '<i class="fas fa-pause"></i>';
+                centerPlayBtn.classList.remove('visible');
+            }
         } else {
             video.pause();
             playPauseBtn.innerHTML = '<i class="fas fa-play"></i>';
+            if (centerPlayBtn) {
+                centerPlayBtn.innerHTML = '<i class="fas fa-play"></i>';
+                centerPlayBtn.classList.add('visible');
+            }
         }
     };
 
+    if (centerPlayBtn) centerPlayBtn.onclick = togglePlay;
     playPauseBtn.onclick = togglePlay;
     video.onclick = togglePlay;
 
